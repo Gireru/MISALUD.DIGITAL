@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle2, Phone, AlertTriangle } from 'lucide-react';
+import { CheckCircle2, Phone, AlertTriangle, Trash2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import EmergencyCodeModal from './EmergencyCodeModal';
@@ -19,7 +19,15 @@ function getInitials(name) {
 
 function PatientCard({ journey, index, onUpdate }) {
   const [emergencyOpen, setEmergencyOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const color = COLORS[index % COLORS.length];
+
+  const archiveJourney = async () => {
+    setDeleting(true);
+    await base44.entities.ClinicalJourney.update(journey.id, { status: 'cancelled' });
+    onUpdate?.();
+  };
 
   const { data: patient } = useQuery({
     queryKey: ['patient', journey.patient_id],
@@ -190,6 +198,42 @@ function PatientCard({ journey, index, onUpdate }) {
             <AlertTriangle className="w-3.5 h-3.5" />
             {!currentStudy && 'Código de Emergencia'}
           </motion.button>
+
+          {/* Archive button */}
+          {!confirmDelete ? (
+            <motion.button
+              onClick={() => setConfirmDelete(true)}
+              className="py-2.5 px-3 rounded-2xl flex items-center justify-center"
+              style={{ background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.08)' }}
+              whileHover={{ scale: 1.05, background: 'rgba(0,0,0,0.08)' }}
+              whileTap={{ scale: 0.95 }}
+              title="Archivar trayecto"
+            >
+              <Trash2 className="w-3.5 h-3.5 text-gray-400" />
+            </motion.button>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="flex gap-1"
+            >
+              <button
+                onClick={archiveJourney}
+                disabled={deleting}
+                className="py-2 px-3 rounded-xl text-[11px] font-semibold text-white"
+                style={{ background: '#D32F2F' }}
+              >
+                {deleting ? '...' : 'Sí, archivar'}
+              </button>
+              <button
+                onClick={() => setConfirmDelete(false)}
+                className="py-2 px-2 rounded-xl text-[11px] font-semibold text-gray-500"
+                style={{ background: 'rgba(0,0,0,0.06)' }}
+              >
+                No
+              </button>
+            </motion.div>
+          )}
         </div>
       </motion.div>
 

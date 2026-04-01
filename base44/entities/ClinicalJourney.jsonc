@@ -57,6 +57,11 @@
         "cancelled"
       ],
       "default": "active"
+    },
+    "absence_warned": {
+      "type": "boolean",
+      "default": false,
+      "description": "Si ya se envi\u00f3 alerta de posible ausencia"
     }
   },
   "required": [
