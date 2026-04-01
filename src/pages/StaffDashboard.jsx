@@ -6,6 +6,7 @@ import { Users, Clock, TrendingUp, CheckCircle2, Zap } from 'lucide-react';
 import RadarFlowCard from '../components/staff/RadarFlowCard';
 import PatientBubbleFlow from '../components/staff/PatientBubbleFlow';
 import FloatingAlerts from '../components/staff/FloatingAlerts';
+import ActiveEmergencyBanner from '../components/staff/ActiveEmergencyBanner';
 
 const SF = '-apple-system, SF Pro Display, BlinkMacSystemFont, Segoe UI, sans-serif';
 
@@ -129,6 +130,9 @@ export default function StaffDashboard() {
           <FloatingAlerts modules={modules} />
         </div>
       </div>
+
+      {/* Emergency codes live feed */}
+      <ActiveEmergencyBanner />
 
       {/* Active journeys */}
       <div>
