@@ -15,6 +15,7 @@ const AVAILABLE_STUDIES = [
   { name: 'Electrocardiograma', area: 'Cardiología', minutes: 12, prep: 'Evitar cafeína 2 horas antes' },
   { name: 'Examen de Vista', area: 'Oftalmología', minutes: 15, prep: '' },
   { name: 'Vacunación', area: 'Vacunación', minutes: 8, prep: '' },
+  { name: 'Otro', area: 'Otro', minutes: 10, prep: '' },
 ];
 
 export default function RegisterPatient() {
