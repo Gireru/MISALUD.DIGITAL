@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { FlaskConical, Scan, Stethoscope, Heart, Syringe, Eye } from 'lucide-react';
+import { FlaskConical, Scan, Stethoscope, Heart, Syringe, Eye, Edit2 } from 'lucide-react';
+import EditModuleModal from './EditModuleModal';
 
 const areaIcons = {
   'Laboratorio': FlaskConical,
@@ -21,24 +22,27 @@ const saturationConfig = {
 const RADIUS = 34;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
-export default function RadarFlowCard({ mod, index }) {
+export default function RadarFlowCard({ mod, index, onUpdate }) {
+  const [editOpen, setEditOpen] = useState(false);
   const Icon = areaIcons[mod.area_name] || FlaskConical;
   const config = saturationConfig[mod.saturation_level] || saturationConfig.low;
   const percent = mod.max_capacity > 0 ? mod.current_capacity / mod.max_capacity : 0;
   const strokeDash = CIRCUMFERENCE * percent;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 24 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.07, duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className="relative flex flex-col items-center p-6 rounded-3xl"
-      style={{
-        background: 'white',
-        boxShadow: '0 2px 20px rgba(0,0,0,0.06)',
-        border: '1px solid rgba(0,0,0,0.05)',
-      }}
-    >
+    <>
+      <motion.div
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: index * 0.07, duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+        className="relative flex flex-col items-center p-6 rounded-3xl cursor-pointer hover:shadow-lg transition-shadow group"
+        style={{
+          background: 'white',
+          boxShadow: '0 2px 20px rgba(0,0,0,0.06)',
+          border: '1px solid rgba(0,0,0,0.05)',
+        }}
+        onClick={() => setEditOpen(true)}
+      >
       {/* Ring */}
       <div className="relative w-20 h-20 mb-4">
         <svg className="w-full h-full -rotate-90" viewBox="0 0 80 80">
@@ -124,6 +128,25 @@ export default function RadarFlowCard({ mod, index }) {
           <p className="text-[10px] text-gray-400 mt-0.5">Espera</p>
         </div>
       </div>
-    </motion.div>
+
+      {/* Edit button hint */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        whileHover={{ opacity: 1 }}
+        className="absolute top-3 right-3 p-1.5 rounded-lg bg-gray-900/5 opacity-0 group-hover:opacity-100 transition-opacity"
+      >
+        <Edit2 className="w-3.5 h-3.5 text-gray-600" />
+      </motion.div>
+      </motion.div>
+
+      {/* Edit modal */}
+      {editOpen && (
+        <EditModuleModal
+          module={mod}
+          onClose={() => setEditOpen(false)}
+          onUpdate={onUpdate}
+        />
+      )}
+    </>
   );
 }

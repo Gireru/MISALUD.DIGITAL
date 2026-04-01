@@ -35,6 +35,7 @@ export default function StaffDashboard() {
   }, [queryClient]);
 
   const handleJourneyUpdate = () => queryClient.invalidateQueries({ queryKey: ['all-journeys'] });
+  const handleModuleUpdate = () => queryClient.invalidateQueries({ queryKey: ['clinical-modules'] });
 
   const activeCount = allPatients.filter(p => p.current_status === 'in_progress').length;
   const completedCount = allPatients.filter(p => p.current_status === 'completed').length;
@@ -111,7 +112,7 @@ export default function StaffDashboard() {
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             {modules.map((mod, i) => (
-              <RadarFlowCard key={mod.id} mod={mod} index={i} />
+              <RadarFlowCard key={mod.id} mod={mod} index={i} onUpdate={handleModuleUpdate} />
             ))}
           </div>
         </div>
