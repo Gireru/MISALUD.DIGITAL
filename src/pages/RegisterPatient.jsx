@@ -198,14 +198,14 @@ export default function RegisterPatient() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.55 }}
-            className="grid grid-cols-2 gap-2"
+            className="flex flex-col gap-2"
           >
-            <Button variant="outline" className="rounded-xl text-sm h-11" onClick={() => setResult(null)}>
-              <UserPlus className="w-4 h-4 mr-1.5" /> Nuevo registro
+            <Button variant="outline" className="w-full rounded-xl text-sm h-11" onClick={() => setResult(null)}>
+              <UserPlus className="w-4 h-4 mr-2 shrink-0" /> Nuevo registro
             </Button>
-            <Button variant="outline" className="rounded-xl text-sm h-11" asChild>
+            <Button variant="outline" className="w-full rounded-xl text-sm h-11" asChild>
               <a href="/mis-trayectos" target="_blank" rel="noopener noreferrer">
-                <Phone className="w-4 h-4 mr-1.5" /> Mis trayectos
+                <Phone className="w-4 h-4 mr-2 shrink-0" /> Mis trayectos
               </a>
             </Button>
           </motion.div>
