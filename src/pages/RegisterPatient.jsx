@@ -116,7 +116,7 @@ export default function RegisterPatient() {
     <div className="p-6 md:p-8 max-w-2xl mx-auto font-body space-y-6">
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
         <h1 className="font-heading text-3xl font-bold">Registro de Paciente</h1>
-        <p className="text-muted-foreground text-sm mt-1">Genera un trayecto clínico optimizado</p>
+
       </motion.div>
 
       {result ? (
