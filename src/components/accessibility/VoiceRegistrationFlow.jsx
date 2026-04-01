@@ -221,14 +221,17 @@ export default function VoiceRegistrationFlow() {
     );
   }
 
-  const handleMicMouseDown = () => {
-    if (!loading) {
-      startRecording();
-    }
+  const handleStartRecording = async () => {
+    if (loading) return;
+    const startMsg = 'Comienza a hablar ahora.';
+    speak(startMsg);
+    await startRecording();
   };
 
-  const handleMicMouseUp = () => {
+  const handleStopRecording = () => {
     if (mediaRecorderRef.current) {
+      const stopMsg = 'Procesando tu respuesta...';
+      speak(stopMsg);
       stopRecording(nextAction);
     }
   };
@@ -299,31 +302,34 @@ export default function VoiceRegistrationFlow() {
           </div>
         )}
 
-        {/* Mic button */}
-        <motion.button
-          onMouseDown={handleMicMouseDown}
-          onMouseUp={handleMicMouseUp}
-          onTouchStart={handleMicMouseDown}
-          onTouchEnd={handleMicMouseUp}
-          className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mt-8 transition-all"
-          style={{
-            background: isListening ? '#D32F2F' : '#4B0082',
-            boxShadow: isListening ? '0 0 40px rgba(211,47,47,0.4)' : '0 8px 24px rgba(75,0,130,0.3)',
-          }}
-          animate={isListening ? { scale: [1, 1.05, 1] } : {}}
-          transition={{ duration: 0.6, repeat: Infinity }}
-          disabled={loading}
-        >
-          {isListening ? (
-            <Square className="w-8 h-8 text-white" fill="white" />
+        {/* Recording controls */}
+        <div className="flex flex-col gap-3 mt-8">
+          {!isListening ? (
+            <motion.button
+              onClick={handleStartRecording}
+              disabled={loading}
+              className="w-full py-4 rounded-2xl font-semibold text-white flex items-center justify-center gap-3 disabled:opacity-50"
+              style={{ background: '#4B0082' }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <Mic className="w-5 h-5" />
+              Grabar respuesta
+            </motion.button>
           ) : (
-            <Mic className="w-8 h-8 text-white" />
+            <motion.button
+              onClick={handleStopRecording}
+              disabled={loading}
+              className="w-full py-4 rounded-2xl font-semibold text-white flex items-center justify-center gap-3"
+              style={{ background: '#D32F2F' }}
+              animate={{ scale: [1, 1.02, 1] }}
+              transition={{ duration: 0.6, repeat: Infinity }}
+            >
+              <Square className="w-5 h-5" fill="white" />
+              Detener grabación
+            </motion.button>
           )}
-        </motion.button>
-
-        <p className="text-center mt-4 text-xs text-gray-500">
-          {isListening ? 'Grabando...' : 'Mantén presionado para grabar'}
-        </p>
+        </div>
       </motion.div>
     </div>
   );
