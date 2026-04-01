@@ -1,14 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
-import { QrCode, UserPlus, CheckCircle2, Copy, Phone } from 'lucide-react';
+import { QrCode, UserPlus, CheckCircle2, Copy, Phone, AlertCircle } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
-import { useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
 
 const AVAILABLE_STUDIES = [
@@ -21,6 +20,18 @@ const AVAILABLE_STUDIES = [
   { name: 'Otro', area: 'Otro', minutes: 10, prep: '' },
 ];
 
+function isSameDay(dateStr) {
+  const d = new Date(dateStr);
+  const now = new Date();
+  return d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate();
+}
+
+function formatDate(dateStr) {
+  return new Date(dateStr).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
 export default function RegisterPatient() {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -28,9 +39,11 @@ export default function RegisterPatient() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [result, setResult] = useState(null);
 
+  // Duplicate detection dialog
+  const [dupDialog, setDupDialog] = useState(null); // { patient, journey, dateStr }
+
   useEffect(() => {
     if (result) {
-      // Burst confetti on success
       const end = Date.now() + 2000;
       const colors = ['#4B0082', '#7B00CC', '#008F4C', '#ffffff'];
       const frame = () => {
@@ -50,24 +63,7 @@ export default function RegisterPatient() {
     );
   };
 
-  const handleRegister = async () => {
-    if (!name.trim() || !phone.trim() || selectedStudies.length === 0) {
-      toast.error('Ingresa nombre, teléfono y selecciona al menos un estudio');
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    const qrToken = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
-
-    const patient = await base44.entities.Patient.create({
-      name: name.trim(),
-      phone,
-      qr_token: qrToken,
-      current_status: 'in_progress',
-    });
-
-    // Build studies with stochastic routing (sort by least wait)
+  const createNewJourney = async (patientId, patientName) => {
     const modules = await base44.entities.ClinicalModule.list();
     const moduleMap = {};
     modules.forEach(m => { moduleMap[m.area_name] = m; });
@@ -86,24 +82,98 @@ export default function RegisterPatient() {
       };
     });
 
-    // Sort by wait time (stochastic routing: lowest wait first)
     studies.sort((a, b) => a._wait - b._wait);
     studies.forEach(s => delete s._wait);
-
-    // First study is in_progress
     if (studies.length > 0) studies[0].status = 'in_progress';
-
     const totalEta = studies.reduce((sum, s) => sum + s.estimated_minutes, 0);
 
     await base44.entities.ClinicalJourney.create({
-      patient_id: patient.id,
-      patient_name: name.trim(),
+      patient_id: patientId,
+      patient_name: patientName,
       studies,
       total_eta_minutes: totalEta,
       status: 'active',
     });
 
+    return totalEta;
+  };
+
+  const handleRegister = async () => {
+    if (!name.trim() || !phone.trim() || selectedStudies.length === 0) {
+      toast.error('Ingresa nombre, teléfono y selecciona al menos un estudio');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    // Check for existing patient with same name + phone
+    const existingPatients = await base44.entities.Patient.filter({
+      name: name.trim(),
+      phone: phone.trim(),
+    });
+
+    if (existingPatients.length > 0) {
+      const existing = existingPatients[0];
+
+      // Find their most recent active journey
+      const journeys = await base44.entities.ClinicalJourney.filter({ patient_id: existing.id });
+      const activeJourney = journeys.find(j => j.status === 'active') || journeys[0];
+
+      if (activeJourney) {
+        const createdDate = activeJourney.created_date;
+
+        if (isSameDay(createdDate)) {
+          // Same day → redirect to existing journey directly
+          setIsSubmitting(false);
+          const url = `${window.location.origin}/patient/view?token=${existing.qr_token}`;
+          setResult({ qrToken: existing.qr_token, patientName: existing.name, totalEta: activeJourney.total_eta_minutes, existing: true });
+          return;
+        } else {
+          // Different day → ask patient
+          setIsSubmitting(false);
+          setDupDialog({
+            patient: existing,
+            journey: activeJourney,
+            dateStr: formatDate(createdDate),
+          });
+          return;
+        }
+      }
+    }
+
+    // No duplicate → create fresh patient + journey
+    const qrToken = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
+    const patient = await base44.entities.Patient.create({
+      name: name.trim(),
+      phone: phone.trim(),
+      qr_token: qrToken,
+      current_status: 'in_progress',
+    });
+
+    const totalEta = await createNewJourney(patient.id, name.trim());
+
     setResult({ qrToken, patientName: name.trim(), totalEta });
+    setIsSubmitting(false);
+    setName('');
+    setPhone('');
+    setSelectedStudies([]);
+  };
+
+  // User chose "view old journey"
+  const handleViewOldJourney = () => {
+    const { patient, journey } = dupDialog;
+    setDupDialog(null);
+    setResult({ qrToken: patient.qr_token, patientName: patient.name, totalEta: journey.total_eta_minutes, existing: true });
+  };
+
+  // User chose "create new journey for same patient"
+  const handleCreateNewForExisting = async () => {
+    const { patient } = dupDialog;
+    setDupDialog(null);
+    setIsSubmitting(true);
+
+    const totalEta = await createNewJourney(patient.id, patient.name);
+    setResult({ qrToken: patient.qr_token, patientName: patient.name, totalEta });
     setIsSubmitting(false);
     setName('');
     setPhone('');
@@ -116,8 +186,43 @@ export default function RegisterPatient() {
     <div className="p-6 md:p-8 max-w-2xl mx-auto font-body space-y-6">
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
         <h1 className="font-heading text-3xl font-bold">Registro de Paciente</h1>
-
       </motion.div>
+
+      {/* Duplicate dialog */}
+      <AnimatePresence>
+        {dupDialog && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="bg-card border border-yellow-200 rounded-2xl p-6 space-y-4"
+          >
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-xl bg-yellow-50 flex items-center justify-center shrink-0">
+                <AlertCircle className="w-5 h-5 text-yellow-500" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-base">Paciente ya registrado</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Encontramos un registro de <strong>{dupDialog.patient.name}</strong> del <strong>{dupDialog.dateStr}</strong>.
+                  ¿Es el mismo trayecto o deseas iniciar uno nuevo hoy?
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-col gap-2">
+              <Button className="w-full rounded-xl h-11" onClick={handleViewOldJourney}>
+                <QrCode className="w-4 h-4 mr-2" /> Ver trayecto del {dupDialog.dateStr}
+              </Button>
+              <Button variant="outline" className="w-full rounded-xl h-11" onClick={handleCreateNewForExisting}>
+                <UserPlus className="w-4 h-4 mr-2" /> Crear nuevo trayecto para hoy
+              </Button>
+              <Button variant="ghost" className="w-full rounded-xl h-10 text-sm text-muted-foreground" onClick={() => setDupDialog(null)}>
+                Cancelar
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {result ? (
         <motion.div
@@ -142,7 +247,7 @@ export default function RegisterPatient() {
             transition={{ delay: 0.2 }}
             className="font-heading text-xl font-bold mb-1"
           >
-            ¡Registro exitoso!
+            {result.existing ? '¡Trayecto encontrado!' : '¡Registro exitoso!'}
           </motion.h2>
           <motion.p
             initial={{ opacity: 0 }}
@@ -173,7 +278,7 @@ export default function RegisterPatient() {
             </Button>
           </motion.div>
 
-          {/* Primary CTA - Ver trayecto */}
+          {/* Primary CTA */}
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
@@ -210,7 +315,7 @@ export default function RegisterPatient() {
             </Button>
           </motion.div>
         </motion.div>
-      ) : (
+      ) : !dupDialog && (
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
