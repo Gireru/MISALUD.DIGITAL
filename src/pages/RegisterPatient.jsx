@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
-import { QrCode, UserPlus, CheckCircle2, Copy } from 'lucide-react';
+import { QrCode, UserPlus, CheckCircle2, Copy, Phone } from 'lucide-react';
 
 const AVAILABLE_STUDIES = [
   { name: 'Análisis de Sangre', area: 'Laboratorio', minutes: 15, prep: 'Requiere ayuno de 8 horas' },
@@ -132,13 +132,20 @@ export default function RegisterPatient() {
             </div>
           </div>
 
-          <div className="flex gap-3">
-            <Button className="flex-1" onClick={() => setResult(null)}>
-              <UserPlus className="w-4 h-4 mr-2" /> Nuevo registro
-            </Button>
-            <Button variant="outline" className="flex-1" asChild>
-              <a href={patientUrl} target="_blank" rel="noopener noreferrer">
-                <QrCode className="w-4 h-4 mr-2" /> Ver trayecto
+          <div className="flex flex-col gap-2">
+            <div className="flex gap-2">
+              <Button className="flex-1" onClick={() => setResult(null)}>
+                <UserPlus className="w-4 h-4 mr-2" /> Nuevo registro
+              </Button>
+              <Button variant="outline" className="flex-1" asChild>
+                <a href={patientUrl} target="_blank" rel="noopener noreferrer">
+                  <QrCode className="w-4 h-4 mr-2" /> Ver trayecto
+                </a>
+              </Button>
+            </div>
+            <Button variant="ghost" className="w-full text-xs text-muted-foreground" asChild>
+              <a href="/mis-trayectos" target="_blank" rel="noopener noreferrer">
+                <Phone className="w-3.5 h-3.5 mr-2" /> Ver todos mis trayectos con mi teléfono
               </a>
             </Button>
           </div>

@@ -13,8 +13,8 @@ const navItems = [
 export default function AppLayout() {
   const location = useLocation();
 
-  // Patient view has no sidebar
-  if (location.pathname.startsWith('/patient/')) {
+  // Patient-facing views have no sidebar
+  if (location.pathname.startsWith('/patient/') || location.pathname === '/mis-trayectos') {
     return <Outlet />;
   }
 

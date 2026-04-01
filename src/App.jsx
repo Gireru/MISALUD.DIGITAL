@@ -10,6 +10,7 @@ import StaffDashboard from './pages/StaffDashboard';
 import PatientList from './pages/PatientList';
 import RegisterPatient from './pages/RegisterPatient';
 import PatientView from './pages/PatientView';
+import MisTrayectos from './pages/MisTrayectos';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -43,6 +44,7 @@ const AuthenticatedApp = () => {
         <Route path="/patients" element={<PatientList />} />
         <Route path="/register" element={<RegisterPatient />} />
         <Route path="/patient/view" element={<PatientView />} />
+        <Route path="/mis-trayectos" element={<MisTrayectos />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
