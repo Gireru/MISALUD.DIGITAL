@@ -8,9 +8,20 @@ import { Button } from '@/components/ui/button';
 import LuxuryTimelineNode from '../components/patient/LuxuryTimelineNode';
 
 export default function PatientView() {
-  const fullSearch = window.location.search || window.location.href.split('?')[1] || '';
-  const urlParams = new URLSearchParams(fullSearch);
-  const token = urlParams.get('token');
+  // Robust token parsing for all browsers/devices
+  const getToken = () => {
+    // Try standard location.search first
+    if (window.location.search) {
+      const p = new URLSearchParams(window.location.search);
+      const t = p.get('token');
+      if (t) return t;
+    }
+    // Fallback: parse from full href
+    const href = window.location.href;
+    const match = href.match(/[?&]token=([^&]+)/);
+    return match ? decodeURIComponent(match[1]) : null;
+  };
+  const token = getToken();
   const queryClient = useQueryClient();
   const [chatOpen, setChatOpen] = useState(false);
   const [messages, setMessages] = useState([
