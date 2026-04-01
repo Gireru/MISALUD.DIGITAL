@@ -8,8 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { QrCode, UserPlus, CheckCircle2, Copy, Phone, AlertCircle, Mic } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import confetti from 'canvas-confetti';
-import VoiceAssistant from '../components/accessibility/VoiceAssistant';
-import { useVoice } from '@/lib/VoiceContext';
+
 
 const AVAILABLE_STUDIES = [
   { name: 'Análisis de Sangre',    area: 'Laboratorio',  minutes: 15, prep: 'Requiere ayuno de 8 horas' },
@@ -22,7 +21,6 @@ const AVAILABLE_STUDIES = [
 ];
 
 export default function RegisterPatient() {
-  const { speak } = useVoice();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [selectedStudies, setSelectedStudies] = useState([]);
@@ -51,9 +49,7 @@ export default function RegisterPatient() {
 
   const handleRegister = async () => {
     if (!name.trim() || !phone.trim() || selectedStudies.length === 0) {
-      const msg = 'Ingresa nombre, teléfono y selecciona al menos un estudio.';
-      setError(msg);
-      speak(msg);
+      setError('Ingresa nombre, teléfono y selecciona al menos un estudio.');
       return;
     }
     setError('');
@@ -77,7 +73,6 @@ export default function RegisterPatient() {
 
       const patientUrl = `${window.location.origin}/patient/view?token=${data.qrToken}`;
       setResult({ ...data, patientUrl });
-      speak(`¡Registro exitoso! ${data.patientName}, tu tiempo estimado es ${data.totalEta} minutos. Abre el enlace de tu trayecto para ver detalles.`);
       setName('');
       setPhone('');
       setSelectedStudies([]);
@@ -170,24 +165,6 @@ export default function RegisterPatient() {
   // ── FORM SCREEN ─────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-white">
-      <VoiceAssistant
-        onVoiceCommand={(command) => {
-          if (command.includes('registro') || command.includes('registrar')) {
-            if (name && phone && selectedStudies.length > 0) {
-              speak('Registrando paciente');
-              handleRegister();
-            } else {
-              speak('Por favor, completa nombre, teléfono y selecciona al menos un estudio');
-            }
-          } else if (command.includes('estudio')) {
-            const studyToAdd = AVAILABLE_STUDIES.find(s => command.includes(s.name.toLowerCase()));
-            if (studyToAdd) {
-              toggleStudy(studyToAdd.name);
-              speak(`${studyToAdd.name} ${selectedStudies.includes(studyToAdd.name) ? 'deseleccionado' : 'seleccionado'}`);
-            }
-          }
-        }}
-      />
       <div className="p-6 max-w-lg mx-auto space-y-6">
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
           <h1 className="font-heading text-2xl font-bold">Registro de Paciente</h1>
