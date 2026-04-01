@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Activity, MessageSquarePlus, X, Send } from 'lucide-react';
+import { Activity, MessageSquarePlus, X, Send, AlertCircle, Clock } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import LuxuryTimelineNode from '../components/patient/LuxuryTimelineNode';
@@ -44,14 +44,25 @@ export default function PatientView() {
   const patient = data?.patient;
   const journey = data?.journey;
 
+  const { data: comments = [] } = useQuery({
+    queryKey: ['journey-comments', journey?.id],
+    queryFn: () => base44.entities.JourneyComment.filter({ journey_id: journey.id }, '-created_date'),
+    enabled: !!journey?.id,
+  });
+
   useEffect(() => {
     if (!journey?.id) return;
-    const unsub = base44.entities.ClinicalJourney.subscribe((event) => {
+    const unsub1 = base44.entities.ClinicalJourney.subscribe((event) => {
       if (event.id === journey.id) {
         queryClient.invalidateQueries({ queryKey: ['patient-journey-by-token', token] });
       }
     });
-    return unsub;
+    const unsub2 = base44.entities.JourneyComment.subscribe((event) => {
+      if (event.data?.journey_id === journey.id) {
+        queryClient.invalidateQueries({ queryKey: ['journey-comments', journey.id] });
+      }
+    });
+    return () => { unsub1(); unsub2(); };
   }, [journey?.id, queryClient, token]);
 
   const handleSend = async () => {
@@ -162,6 +173,42 @@ export default function PatientView() {
           </motion.div>
         </motion.div>
       </div>
+
+      {/* Doctor comments alerts */}
+      {comments.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="px-6 mb-6 max-w-md mx-auto space-y-2"
+        >
+          {comments.map(c => (
+            <motion.div
+              key={c.id}
+              initial={{ opacity: 0, x: -12 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="p-4 rounded-2xl flex gap-3"
+              style={{
+                background: c.is_wait_extension ? 'rgba(245,166,35,0.08)' : 'rgba(75,0,130,0.06)',
+                border: c.is_wait_extension ? '1px solid rgba(245,166,35,0.2)' : '1px solid rgba(75,0,130,0.1)',
+              }}
+            >
+              {c.is_wait_extension ? (
+                <Clock className="w-4 h-4 mt-0.5 shrink-0" style={{ color: '#f5a623' }} />
+              ) : (
+                <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" style={{ color: '#4B0082' }} />
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-semibold text-gray-900 mb-0.5">
+                  {c.doctor_name}
+                </p>
+                <p className="text-xs leading-relaxed text-gray-700">
+                  {c.comment}
+                </p>
+              </div>
+            </motion.div>
+          ))}
+        </motion.div>
+      )}
 
       {/* Vertical timeline */}
       <div className="px-6 pb-32 max-w-md mx-auto">

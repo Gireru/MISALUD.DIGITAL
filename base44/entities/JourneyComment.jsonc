@@ -1,0 +1,37 @@
+{
+  "name": "JourneyComment",
+  "type": "object",
+  "properties": {
+    "journey_id": {
+      "type": "string",
+      "description": "Reference to ClinicalJourney ID"
+    },
+    "patient_name": {
+      "type": "string",
+      "description": "Patient name for display"
+    },
+    "comment": {
+      "type": "string",
+      "description": "Comment text from doctor/admin"
+    },
+    "doctor_name": {
+      "type": "string",
+      "description": "Name of doctor who added comment"
+    },
+    "is_wait_extension": {
+      "type": "boolean",
+      "default": false,
+      "description": "True if this is a +10 min wait notification"
+    },
+    "wait_extension_minutes": {
+      "type": "number",
+      "default": 0,
+      "description": "Minutes added to wait time"
+    }
+  },
+  "required": [
+    "journey_id",
+    "patient_name",
+    "comment"
+  ]
+}

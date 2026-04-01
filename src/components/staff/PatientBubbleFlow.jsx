@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle2, Phone, AlertTriangle, Trash2 } from 'lucide-react';
+import { CheckCircle2, Phone, AlertTriangle, Trash2, MessageSquare } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import EmergencyCodeModal from './EmergencyCodeModal';
+import DoctorNotesPanel from './DoctorNotesPanel';
 
 // ── Priority color palette ──────────────────────────────────────────
 const PRIORITY = {
@@ -88,6 +89,7 @@ function PatientCard({ journey, index, onUpdate }) {
   const [emergencyOpen, setEmergencyOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [notesOpen, setNotesOpen] = useState(false);
 
   const color = getColor(journey);
   const autoPriority = getAutoPriority(journey.studies || []);
@@ -274,6 +276,22 @@ function PatientCard({ journey, index, onUpdate }) {
           )}
 
           <motion.button
+            onClick={() => setNotesOpen(true)}
+            className="py-2.5 px-3 rounded-2xl text-xs font-semibold flex items-center justify-center gap-1.5"
+            style={{
+              background: 'rgba(75,0,130,0.08)',
+              color: '#4B0082',
+              border: '1px solid rgba(75,0,130,0.18)',
+              fontFamily: '-apple-system, SF Pro Text, sans-serif',
+            }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.97 }}
+            title="Añadir comentarios"
+          >
+            <MessageSquare className="w-3.5 h-3.5" />
+          </motion.button>
+
+          <motion.button
             onClick={() => setEmergencyOpen(true)}
             className="py-2.5 rounded-2xl text-xs font-semibold flex items-center justify-center gap-1.5 px-3"
             style={{
@@ -334,6 +352,16 @@ function PatientCard({ journey, index, onUpdate }) {
             patient={patient}
             journey={journey}
             onClose={() => setEmergencyOpen(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {notesOpen && (
+          <DoctorNotesPanel
+            journey={journey}
+            onClose={() => setNotesOpen(false)}
+            onUpdate={onUpdate}
           />
         )}
       </AnimatePresence>
