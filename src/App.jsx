@@ -16,6 +16,7 @@ import RegisterPatient from './pages/RegisterPatient';
 import PatientView from './pages/PatientView';
 import MisTrayectos from './pages/MisTrayectos';
 import AdminLogin from './pages/AdminLogin';
+import VoiceRegistrationFlow from './components/accessibility/VoiceRegistrationFlow';
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
 
             {/* ── Public patient routes ── */}
             <Route path="/register" element={<RegisterPatient />} />
+            <Route path="/voice-register" element={<VoiceRegistrationFlow />} />
             <Route path="/patient/view" element={<PatientView />} />
             <Route path="/mis-trayectos" element={<MisTrayectos />} />
 

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { QrCode, UserPlus, CheckCircle2, Copy, Phone, AlertCircle } from 'lucide-react';
+import { QrCode, UserPlus, CheckCircle2, Copy, Phone, AlertCircle, Mic } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import confetti from 'canvas-confetti';
 import VoiceAssistant from '../components/accessibility/VoiceAssistant';
@@ -152,9 +152,15 @@ export default function RegisterPatient() {
           </button>
           <a
             href="/mis-trayectos"
-            className="flex items-center justify-center gap-2 w-full h-11 rounded-xl border border-gray-200 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+            className="flex items-center justify-center gap-2 w-full h-11 rounded-xl border border-gray-200 text-sm text-gray-700 hover:bg-gray-50 transition-colors mb-2"
           >
             <Phone className="w-4 h-4" /> Mis trayectos
+          </a>
+          <a
+            href="/voice-register"
+            className="flex items-center justify-center gap-2 w-full h-11 rounded-xl border border-purple-200 text-sm text-purple-700 hover:bg-purple-50 transition-colors"
+          >
+            <Mic className="w-4 h-4" /> Registro por voz
           </a>
         </motion.div>
       </div>
