@@ -6,6 +6,8 @@ import { Activity, MessageSquarePlus, X, Send, AlertCircle, Clock } from 'lucide
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import LuxuryTimelineNode from '../components/patient/LuxuryTimelineNode';
+import VoiceAssistant from '../components/accessibility/VoiceAssistant';
+import { useVoice } from '@/lib/VoiceContext';
 
 export default function PatientView() {
   // Robust token parsing for all browsers/devices
@@ -23,6 +25,7 @@ export default function PatientView() {
   };
   const token = getToken();
   const queryClient = useQueryClient();
+  const { speak } = useVoice();
   const [chatOpen, setChatOpen] = useState(false);
   const [messages, setMessages] = useState([
     { role: 'assistant', content: 'Hola, soy tu asistente. ¿Tienes alguna duda sobre tu visita?' }
@@ -69,6 +72,7 @@ export default function PatientView() {
     if (!inputMsg.trim() || aiLoading) return;
     const text = inputMsg.trim();
     setInputMsg('');
+    speak(text);
     setMessages(prev => [...prev, { role: 'user', content: text }]);
     setAiLoading(true);
     try {
@@ -76,7 +80,9 @@ export default function PatientView() {
         message: text,
         patientName: patient?.name || '',
       });
-      setMessages(prev => [...prev, { role: 'assistant', content: res.data?.reply || 'Lo siento, no pude responder.' }]);
+      const reply = res.data?.reply || 'Lo siento, no pude responder.';
+      speak(reply);
+      setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
     } catch {
       setMessages(prev => [...prev, { role: 'assistant', content: 'Hubo un error al conectar con el asistente.' }]);
     }
@@ -236,9 +242,25 @@ export default function PatientView() {
         </div>
       </div>
 
+      {/* Voice Assistant */}
+      <VoiceAssistant
+        onVoiceCommand={(command) => {
+          if (command.includes('chat') || command.includes('asistente')) {
+            setChatOpen(true);
+            speak('Abriendo asistente');
+          } else if (command.includes('cerrar') && chatOpen) {
+            setChatOpen(false);
+            speak('Cerrando asistente');
+          }
+        }}
+      />
+
       {/* Glassmorphism FAB */}
       <motion.button
-        onClick={() => setChatOpen(true)}
+        onClick={() => {
+          setChatOpen(true);
+          speak('Abriendo asistente');
+        }}
         className="fixed bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2.5 px-6 py-3.5 rounded-2xl z-40"
         style={{
           background: 'rgba(255,255,255,0.7)',

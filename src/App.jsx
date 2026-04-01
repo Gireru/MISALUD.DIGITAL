@@ -5,6 +5,7 @@ import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-d
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider } from '@/lib/AuthContext';
 import StaffGuard from './components/StaffGuard';
+import { VoiceProvider } from '@/lib/VoiceContext';
 
 // Staff (protected) pages
 import StaffDashboard from './pages/StaffDashboard';
@@ -20,6 +21,7 @@ function App() {
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
+        <VoiceProvider>
         <Router>
           <Routes>
             {/* ── Landing: redirect / to register ── */}
@@ -43,6 +45,7 @@ function App() {
           </Routes>
         </Router>
         <Toaster />
+        </VoiceProvider>
       </QueryClientProvider>
     </AuthProvider>
   );
