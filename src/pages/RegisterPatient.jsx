@@ -142,7 +142,7 @@ export default function RegisterPatient() {
     }
 
     // No duplicate → create fresh patient + journey
-    const qrToken = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
+    const qrToken = Array.from({ length: 16 }, () => Math.floor(Math.random() * 36).toString(36)).join('');
     const patient = await base44.entities.Patient.create({
       name: name.trim(),
       phone: phone.trim(),

@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button';
 import LuxuryTimelineNode from '../components/patient/LuxuryTimelineNode';
 
 export default function PatientView() {
-  const urlParams = new URLSearchParams(window.location.search);
+  const fullSearch = window.location.search || window.location.href.split('?')[1] || '';
+  const urlParams = new URLSearchParams(fullSearch);
   const token = urlParams.get('token');
   const queryClient = useQueryClient();
   const [chatOpen, setChatOpen] = useState(false);
@@ -22,17 +23,24 @@ export default function PatientView() {
     queryKey: ['patient-by-token', token],
     queryFn: () => base44.entities.Patient.filter({ qr_token: token }),
     enabled: !!token,
-    retry: 2,
+    retry: 3,
     staleTime: 0,
+    gcTime: 0,
   });
   const patient = patients?.[0];
 
   const { data: journeys, isLoading: loadingJourney, isError: errorJourney } = useQuery({
     queryKey: ['journey-for-patient', patient?.id],
-    queryFn: () => base44.entities.ClinicalJourney.filter({ patient_id: patient.id }),
+    queryFn: async () => {
+      const results = await base44.entities.ClinicalJourney.filter({ patient_id: patient.id });
+      if (results && results.length > 0) return results;
+      // Fallback: search by patient_name
+      return base44.entities.ClinicalJourney.filter({ patient_name: patient.name });
+    },
     enabled: !!patient?.id,
-    retry: 2,
+    retry: 3,
     staleTime: 0,
+    gcTime: 0,
   });
   const journey = journeys?.[0];
 
