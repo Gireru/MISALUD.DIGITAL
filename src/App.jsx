@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider } from '@/lib/AuthContext';
 import StaffGuard from './components/StaffGuard';
@@ -22,17 +22,19 @@ function App() {
       <QueryClientProvider client={queryClientInstance}>
         <Router>
           <Routes>
+            {/* ── Landing: redirect / to register ── */}
+            <Route path="/" element={<Navigate to="/register" replace />} />
+
             {/* ── Public patient routes ── */}
+            <Route path="/register" element={<RegisterPatient />} />
             <Route path="/patient/view" element={<PatientView />} />
             <Route path="/mis-trayectos" element={<MisTrayectos />} />
-            <Route path="/register" element={<RegisterPatient />} />
 
-            {/* ── Hidden admin login ── */}
+            {/* ── Hidden admin login (requires ?key=sdnexus2026) ── */}
             <Route path="/admin-login" element={<AdminLogin />} />
 
             {/* ── Protected staff routes ── */}
             <Route element={<StaffGuard />}>
-              <Route path="/" element={<StaffDashboard />} />
               <Route path="/staff" element={<StaffDashboard />} />
               <Route path="/patients" element={<PatientList />} />
             </Route>
