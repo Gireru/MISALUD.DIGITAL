@@ -36,9 +36,10 @@ function makeToken() {
   return Array.from({ length: 16 }, () => Math.floor(Math.random() * 36).toString(36)).join('');
 }
 
-// STEP: 'form' | 'loading' | 'duplicate' | 'success'
+// STEP: 'form' | 'loading' | 'duplicate' | 'success' | 'error'
 export default function RegisterPatient() {
   const [step, setStep] = useState('form');
+  const [errorMsg, setErrorMsg] = useState('');
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [selectedStudies, setSelectedStudies] = useState([]);
@@ -163,10 +164,10 @@ export default function RegisterPatient() {
       setSelectedStudies([]);
       setStep('success');
     } catch (err) {
-      const msg = err?.response?.data?.message || err?.message || 'Error desconocido';
+      const msg = err?.response?.data?.message || err?.message || String(err) || 'Error desconocido';
       console.error('Register error:', msg, err);
-      toast.error(`Error al registrar: ${msg}`);
-      setStep('form');
+      setErrorMsg(msg);
+      setStep('error');
     }
   };
 
@@ -209,6 +210,19 @@ export default function RegisterPatient() {
             className="flex flex-col items-center justify-center py-20 gap-4">
             <div className="w-10 h-10 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
             <p className="text-sm text-muted-foreground">Registrando paciente…</p>
+          </motion.div>
+        )}
+
+        {/* ERROR */}
+        {step === 'error' && (
+          <motion.div key="error" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+            className="bg-red-50 border border-red-200 rounded-2xl p-8 text-center space-y-4">
+            <AlertCircle className="w-10 h-10 text-red-400 mx-auto" />
+            <h3 className="font-semibold text-red-700">Error al registrar</h3>
+            <p className="text-sm text-red-600 break-all font-mono">{errorMsg}</p>
+            <Button variant="outline" className="rounded-xl" onClick={() => setStep('form')}>
+              Volver al formulario
+            </Button>
           </motion.div>
         )}
 
