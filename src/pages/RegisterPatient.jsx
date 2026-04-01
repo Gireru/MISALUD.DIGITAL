@@ -350,19 +350,22 @@ export default function RegisterPatient() {
               {AVAILABLE_STUDIES.map(study => {
                 const isSelected = selectedStudies.includes(study.name);
                 return (
-                  <button
+                  <div
                     key={study.name}
+                    role="button"
+                    tabIndex={0}
                     onClick={() => toggleStudy(study.name)}
-                    className={`flex items-center gap-3 rounded-xl border p-3 text-left transition-all ${
+                    onKeyDown={e => e.key === 'Enter' && toggleStudy(study.name)}
+                    className={`flex items-center gap-3 rounded-xl border p-3 text-left transition-all cursor-pointer select-none ${
                       isSelected ? 'border-primary/30 bg-primary/5' : 'border-border hover:bg-muted/50'
                     }`}
                   >
-                    <Checkbox checked={isSelected} className="pointer-events-none" />
+                    <Checkbox checked={isSelected} className="pointer-events-none shrink-0" />
                     <div>
                       <p className="text-sm font-medium">{study.name}</p>
                       <p className="text-[11px] text-muted-foreground">{study.area} · ~{study.minutes} min</p>
                     </div>
-                  </button>
+                  </div>
                 );
               })}
             </div>
