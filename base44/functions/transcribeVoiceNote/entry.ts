@@ -27,13 +27,22 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'No audio provided' }, { status: 400 });
     }
 
-    // Convert base64 to Blob
-    const binaryData = Uint8Array.from(atob(audioBase64), c => c.charCodeAt(0));
+    // Clean base64 data
+    const cleanBase64 = audioBase64.replace(/^data:audio\/\w+;base64,/, '');
+    
+    // Convert base64 to File-like object
+    const binaryData = Uint8Array.from(atob(cleanBase64), c => c.charCodeAt(0));
+    const blob = new Blob([binaryData], { type: 'audio/webm' });
 
-    // Use Google Cloud Speech-to-Text API
+    // Upload file and get URL
+    const uploadRes = await base44.integrations.Core.UploadFile({
+      file: blob
+    });
+
+    // Use Gemini with the uploaded file URL
     const transcriptionResult = await base44.integrations.Core.InvokeLLM({
       prompt: `Transcribe the following audio to text in Spanish. Only return the transcribed text, nothing else.`,
-      file_urls: [`data:audio/webm;base64,${audioBase64}`],
+      file_urls: [uploadRes.file_url],
       model: 'gemini_3_flash',
     });
 
