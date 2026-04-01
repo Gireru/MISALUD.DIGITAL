@@ -62,6 +62,17 @@
       "type": "boolean",
       "default": false,
       "description": "Si ya se envi\u00f3 alerta de posible ausencia"
+    },
+    "priority_color": {
+      "type": "string",
+      "enum": [
+        "auto",
+        "green",
+        "yellow",
+        "red"
+      ],
+      "default": "auto",
+      "description": "Color de prioridad asignado manualmente por el doctor (auto = calculado autom\u00e1ticamente)"
     }
   },
   "required": [

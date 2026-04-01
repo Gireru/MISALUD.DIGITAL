@@ -5,27 +5,101 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import EmergencyCodeModal from './EmergencyCodeModal';
 
-const COLORS = [
-  { bg: '#4B0082', light: 'rgba(75,0,130,0.08)' },
-  { bg: '#008F4C', light: 'rgba(0,143,76,0.08)' },
-  { bg: '#f5a623', light: 'rgba(245,166,35,0.08)' },
-  { bg: '#ff6b35', light: 'rgba(255,107,53,0.08)' },
-  { bg: '#007aff', light: 'rgba(0,122,255,0.08)' },
-];
+// ── Priority color palette ──────────────────────────────────────────
+const PRIORITY = {
+  green:  { bg: '#16a34a', light: 'rgba(22,163,74,0.08)',  border: 'rgba(22,163,74,0.2)',  label: 'Inicio' },
+  yellow: { bg: '#d97706', light: 'rgba(217,119,6,0.08)',  border: 'rgba(217,119,6,0.2)',  label: 'Avance' },
+  red:    { bg: '#dc2626', light: 'rgba(220,38,38,0.08)',  border: 'rgba(220,38,38,0.2)',  label: 'Urgente' },
+};
+
+/**
+ * Calculates priority color based on progress:
+ *  - green  : 0–1 completed (just started)
+ *  - yellow : 2–3 completed (mid journey)
+ *  - red    : >= (total - 1) completed (almost done / critical)
+ */
+function getAutoPriority(studies) {
+  const total = studies.length;
+  const completed = studies.filter(s => s.status === 'completed').length;
+  if (total === 0) return 'green';
+  if (completed >= total - 1) return 'red';
+  if (completed >= 2) return 'yellow';
+  return 'green';
+}
+
+function getColor(journey) {
+  const override = journey.priority_color;
+  const key = (!override || override === 'auto')
+    ? getAutoPriority(journey.studies || [])
+    : override;
+  return PRIORITY[key] || PRIORITY.green;
+}
+
+/** Sort: red first, yellow second, green last */
+function sortByPriority(journeys) {
+  const order = { red: 0, yellow: 1, green: 2 };
+  return [...journeys].sort((a, b) => {
+    const pa = getAutoPriority(a.studies || []);
+    const pb = getAutoPriority(b.studies || []);
+    const oa = a.priority_color && a.priority_color !== 'auto' ? order[a.priority_color] : order[pa];
+    const ob = b.priority_color && b.priority_color !== 'auto' ? order[b.priority_color] : order[pb];
+    return oa - ob;
+  });
+}
 
 function getInitials(name) {
   return name?.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
 }
 
+// ── Color picker pill ───────────────────────────────────────────────
+function ColorPicker({ current, onChange }) {
+  const options = [
+    { value: 'auto',   label: 'Auto', dot: null },
+    { value: 'green',  label: '●', dot: '#16a34a' },
+    { value: 'yellow', label: '●', dot: '#d97706' },
+    { value: 'red',    label: '●', dot: '#dc2626' },
+  ];
+  return (
+    <div className="flex items-center gap-1 mt-2">
+      <span className="text-[10px] text-gray-400 mr-1">Prioridad:</span>
+      {options.map(opt => (
+        <button
+          key={opt.value}
+          onClick={() => onChange(opt.value)}
+          title={opt.label}
+          className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all"
+          style={{
+            background: opt.dot ? opt.dot : '#e5e7eb',
+            color: opt.dot ? 'white' : '#6b7280',
+            border: current === opt.value ? '2.5px solid #1e293b' : '2px solid transparent',
+            fontSize: opt.dot ? 10 : 9,
+            transform: current === opt.value ? 'scale(1.15)' : 'scale(1)',
+          }}
+        >
+          {opt.dot ? '' : 'A'}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ── Patient Card ────────────────────────────────────────────────────
 function PatientCard({ journey, index, onUpdate }) {
   const [emergencyOpen, setEmergencyOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const color = COLORS[index % COLORS.length];
+
+  const color = getColor(journey);
+  const autoPriority = getAutoPriority(journey.studies || []);
 
   const archiveJourney = async () => {
     setDeleting(true);
     await base44.entities.ClinicalJourney.update(journey.id, { status: 'cancelled' });
+    onUpdate?.();
+  };
+
+  const changePriorityColor = async (value) => {
+    await base44.entities.ClinicalJourney.update(journey.id, { priority_color: value });
     onUpdate?.();
   };
 
@@ -60,6 +134,10 @@ function PatientCard({ journey, index, onUpdate }) {
   const currentStudy = studies.find(s => s.status === 'in_progress');
   const currentIdx = studies.findIndex(s => s.status === 'in_progress');
 
+  // Determine if using manual override
+  const isManual = journey.priority_color && journey.priority_color !== 'auto';
+  const currentPick = journey.priority_color || 'auto';
+
   return (
     <>
       <motion.div
@@ -69,18 +147,28 @@ function PatientCard({ journey, index, onUpdate }) {
         className="relative rounded-3xl p-5 overflow-hidden"
         style={{
           background: 'white',
-          boxShadow: '0 2px 20px rgba(0,0,0,0.06)',
-          border: '1px solid rgba(0,0,0,0.05)',
+          boxShadow: `0 2px 20px ${color.bg}18`,
+          border: `1px solid ${color.border}`,
         }}
       >
         {/* Top accent line */}
         <div
-          className="absolute top-0 left-0 right-0 h-0.5 rounded-t-3xl"
-          style={{ background: `linear-gradient(to right, ${color.bg}, ${COLORS[(index + 1) % COLORS.length].bg})` }}
+          className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl"
+          style={{ background: color.bg }}
         />
 
+        {/* Priority badge */}
+        <div className="absolute top-3 right-4 flex items-center gap-1">
+          <span
+            className="text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider"
+            style={{ background: color.light, color: color.bg }}
+          >
+            {isManual ? '★ ' : ''}{color.label}
+          </span>
+        </div>
+
         {/* Header row */}
-        <div className="flex items-center gap-3 mb-3">
+        <div className="flex items-center gap-3 mb-3 mt-1">
           <motion.div
             className="w-11 h-11 rounded-2xl flex items-center justify-center text-white font-bold text-sm shrink-0"
             style={{ background: color.bg, fontFamily: '-apple-system, SF Pro Display, sans-serif' }}
@@ -112,7 +200,7 @@ function PatientCard({ journey, index, onUpdate }) {
             </p>
           </div>
 
-          <div className="flex flex-col items-end gap-1 shrink-0">
+          <div className="flex flex-col items-end gap-1 shrink-0 mt-4">
             <p
               className="text-sm font-bold"
               style={{ color: color.bg, fontFamily: '-apple-system, SF Pro Display, sans-serif' }}
@@ -131,7 +219,7 @@ function PatientCard({ journey, index, onUpdate }) {
               className="relative flex-1 h-7 rounded-xl flex items-center justify-center overflow-hidden"
               style={{
                 background: s.status === 'completed'
-                  ? `linear-gradient(135deg, ${color.bg}, ${color.bg}cc)`
+                  ? color.bg
                   : s.status === 'in_progress'
                   ? color.light
                   : '#f5f5f7',
@@ -159,12 +247,15 @@ function PatientCard({ journey, index, onUpdate }) {
           ))}
         </div>
 
-        <p className="text-[10px] text-gray-400 mb-3 truncate">
+        <p className="text-[10px] text-gray-400 truncate">
           {studies.map(s => s.study_name).join(' → ')}
         </p>
 
+        {/* Color picker */}
+        <ColorPicker current={currentPick} onChange={changePriorityColor} />
+
         {/* Action buttons */}
-        <div className="flex gap-2">
+        <div className="flex gap-2 mt-3">
           {currentStudy && (
             <motion.button
               onClick={() => markStudyComplete(currentIdx)}
@@ -172,7 +263,7 @@ function PatientCard({ journey, index, onUpdate }) {
               style={{
                 background: color.light,
                 color: color.bg,
-                border: `1px solid ${color.bg}20`,
+                border: `1px solid ${color.border}`,
                 fontFamily: '-apple-system, SF Pro Text, sans-serif',
               }}
               whileHover={{ scale: 1.01 }}
@@ -250,6 +341,7 @@ function PatientCard({ journey, index, onUpdate }) {
   );
 }
 
+// ── Main export ─────────────────────────────────────────────────────
 export default function PatientBubbleFlow({ journeys, onUpdate }) {
   if (journeys.length === 0) {
     return (
@@ -259,9 +351,11 @@ export default function PatientBubbleFlow({ journeys, onUpdate }) {
     );
   }
 
+  const sorted = sortByPriority(journeys);
+
   return (
     <>
-      {journeys.map((journey, i) => (
+      {sorted.map((journey, i) => (
         <PatientCard key={journey.id} journey={journey} index={i} onUpdate={onUpdate} />
       ))}
     </>
