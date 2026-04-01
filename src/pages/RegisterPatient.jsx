@@ -106,57 +106,58 @@ export default function RegisterPatient() {
 
     setIsSubmitting(true);
 
-    // Check for existing patient with same name + phone
-    const existingPatients = await base44.entities.Patient.filter({
-      name: name.trim(),
-      phone: phone.trim(),
-    });
+    try {
+      // Check for existing patient with same name + phone
+      const existingPatients = await base44.entities.Patient.filter({
+        name: name.trim(),
+        phone: phone.trim(),
+      });
 
-    if (existingPatients.length > 0) {
-      const existing = existingPatients[0];
+      if (existingPatients.length > 0) {
+        const existing = existingPatients[0];
 
-      // Find their most recent active journey
-      const journeys = await base44.entities.ClinicalJourney.filter({ patient_id: existing.id });
-      const activeJourney = journeys.find(j => j.status === 'active') || journeys[0];
+        // Find their most recent active journey
+        const journeys = await base44.entities.ClinicalJourney.filter({ patient_id: existing.id });
+        const activeJourney = journeys.find(j => j.status === 'active') || journeys[0];
 
-      if (activeJourney) {
-        const createdDate = activeJourney.created_date;
+        if (activeJourney) {
+          const createdDate = activeJourney.created_date;
 
-        if (isSameDay(createdDate)) {
-          // Same day → redirect to existing journey directly
-          setIsSubmitting(false);
-          const url = `${window.location.origin}/patient/view?token=${existing.qr_token}`;
-          setResult({ qrToken: existing.qr_token, patientName: existing.name, totalEta: activeJourney.total_eta_minutes, existing: true });
-          return;
-        } else {
-          // Different day → ask patient
-          setIsSubmitting(false);
-          setDupDialog({
-            patient: existing,
-            journey: activeJourney,
-            dateStr: formatDate(createdDate),
-          });
-          return;
+          if (isSameDay(createdDate)) {
+            setResult({ qrToken: existing.qr_token, patientName: existing.name, totalEta: activeJourney.total_eta_minutes, existing: true });
+            return;
+          } else {
+            setDupDialog({
+              patient: existing,
+              journey: activeJourney,
+              dateStr: formatDate(createdDate),
+            });
+            return;
+          }
         }
       }
+
+      // No duplicate → create fresh patient + journey
+      const qrToken = Array.from({ length: 16 }, () => Math.floor(Math.random() * 36).toString(36)).join('');
+      const patient = await base44.entities.Patient.create({
+        name: name.trim(),
+        phone: phone.trim(),
+        qr_token: qrToken,
+        current_status: 'in_progress',
+      });
+
+      const totalEta = await createNewJourney(patient.id, name.trim());
+
+      setResult({ qrToken, patientName: name.trim(), totalEta });
+      setName('');
+      setPhone('');
+      setSelectedStudies([]);
+    } catch (err) {
+      toast.error('Error al registrar. Intenta de nuevo.');
+      console.error('Registration error:', err);
+    } finally {
+      setIsSubmitting(false);
     }
-
-    // No duplicate → create fresh patient + journey
-    const qrToken = Array.from({ length: 16 }, () => Math.floor(Math.random() * 36).toString(36)).join('');
-    const patient = await base44.entities.Patient.create({
-      name: name.trim(),
-      phone: phone.trim(),
-      qr_token: qrToken,
-      current_status: 'in_progress',
-    });
-
-    const totalEta = await createNewJourney(patient.id, name.trim());
-
-    setResult({ qrToken, patientName: name.trim(), totalEta });
-    setIsSubmitting(false);
-    setName('');
-    setPhone('');
-    setSelectedStudies([]);
   };
 
   // User chose "view old journey"
@@ -172,12 +173,18 @@ export default function RegisterPatient() {
     setDupDialog(null);
     setIsSubmitting(true);
 
-    const totalEta = await createNewJourney(patient.id, patient.name);
-    setResult({ qrToken: patient.qr_token, patientName: patient.name, totalEta });
-    setIsSubmitting(false);
-    setName('');
-    setPhone('');
-    setSelectedStudies([]);
+    try {
+      const totalEta = await createNewJourney(patient.id, patient.name);
+      setResult({ qrToken: patient.qr_token, patientName: patient.name, totalEta });
+      setName('');
+      setPhone('');
+      setSelectedStudies([]);
+    } catch (err) {
+      toast.error('Error al crear trayecto. Intenta de nuevo.');
+      console.error('Journey creation error:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const patientUrl = result ? `${window.location.origin}/patient/view?token=${result.qrToken}` : '';
