@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Users, Clock, TrendingUp, CheckCircle2, Zap } from 'lucide-react';
 import RadarFlowCard from '../components/staff/RadarFlowCard';
-import PatientBubbleFlow from '../components/staff/PatientBubbleFlow.jsx';
+import PatientBubbleFlow from '../components/staff/PatientBubbleFlow';
 import FloatingAlerts from '../components/staff/FloatingAlerts';
 
 const SF = '-apple-system, SF Pro Display, BlinkMacSystemFont, Segoe UI, sans-serif';
