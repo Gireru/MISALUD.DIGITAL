@@ -192,6 +192,12 @@ export default function RegisterPatient() {
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
           <h1 className="font-heading text-2xl font-bold">Registro de Paciente</h1>
           <p className="text-sm text-muted-foreground mt-1">Completa los datos para generar tu trayecto</p>
+          <a
+            href="/voice-register"
+            className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-purple-200 text-sm text-purple-700 hover:bg-purple-50 transition-colors"
+          >
+            <Mic className="w-4 h-4" /> O usa registro por voz
+          </a>
         </motion.div>
 
         <motion.div
