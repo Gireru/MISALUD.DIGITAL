@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Activity, MessageSquarePlus, X, Send, Loader2 } from 'lucide-react';
+import { Activity, MessageSquarePlus, X, Send } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import LuxuryTimelineNode from '../components/patient/LuxuryTimelineNode';
@@ -19,40 +19,29 @@ export default function PatientView() {
   const [inputMsg, setInputMsg] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
 
-  const { data: patients, isLoading: loadingPatient, isError: errorPatient } = useQuery({
-    queryKey: ['patient-by-token', token],
-    queryFn: () => base44.entities.Patient.filter({ qr_token: token }),
-    enabled: !!token,
-    retry: 3,
-    staleTime: 0,
-    gcTime: 0,
-  });
-  const patient = patients?.[0];
-
-  const { data: journeys, isLoading: loadingJourney, isError: errorJourney } = useQuery({
-    queryKey: ['journey-for-patient', patient?.id],
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['patient-journey-by-token', token],
     queryFn: async () => {
-      const results = await base44.entities.ClinicalJourney.filter({ patient_id: patient.id });
-      if (results && results.length > 0) return results;
-      // Fallback: search by patient_name
-      return base44.entities.ClinicalJourney.filter({ patient_name: patient.name });
+      const res = await base44.functions.invoke('getPatientByToken', { token });
+      return res.data;
     },
-    enabled: !!patient?.id,
-    retry: 3,
+    enabled: !!token,
+    retry: 2,
     staleTime: 0,
     gcTime: 0,
   });
-  const journey = journeys?.[0];
+  const patient = data?.patient;
+  const journey = data?.journey;
 
   useEffect(() => {
     if (!journey?.id) return;
     const unsub = base44.entities.ClinicalJourney.subscribe((event) => {
       if (event.id === journey.id) {
-        queryClient.invalidateQueries({ queryKey: ['journey-for-patient'] });
+        queryClient.invalidateQueries({ queryKey: ['patient-journey-by-token', token] });
       }
     });
     return unsub;
-  }, [journey?.id, queryClient]);
+  }, [journey?.id, queryClient, token]);
 
   const handleSend = async () => {
     if (!inputMsg.trim() || aiLoading) return;
@@ -87,8 +76,7 @@ export default function PatientView() {
     </div>
   );
 
-  const isLoading = loadingPatient || (!!patient && loadingJourney);
-  const hasError = errorPatient || errorJourney || (patients && patients.length === 0) || (journeys && journeys.length === 0 && !loadingJourney);
+  const hasError = isError || (data?.error) || (!isLoading && (!patient || !journey));
 
   if (isLoading) return (
     <div className="min-h-screen flex items-center justify-center bg-white">
