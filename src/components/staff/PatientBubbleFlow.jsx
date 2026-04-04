@@ -14,24 +14,23 @@ const PRIORITY = {
 };
 
 /**
- * Calculates priority color based on progress:
- *  - green  : 0–1 completed (just started)
- *  - yellow : 2–3 completed (mid journey)
- *  - red    : >= (total - 1) completed (almost done / critical)
+ * Calculates priority color based on time since journey creation:
+ *  - green  : 0–10 minutes
+ *  - yellow : 10–15 minutes (naranja)
+ *  - red    : 15+ minutes
  */
-function getAutoPriority(studies) {
-  const total = studies.length;
-  const completed = studies.filter(s => s.status === 'completed').length;
-  if (total === 0) return 'green';
-  if (completed >= total - 1) return 'red';
-  if (completed >= 2) return 'yellow';
+function getAutoPriority(studies, createdDate) {
+  const created = createdDate ? new Date(createdDate) : new Date();
+  const minutesElapsed = (Date.now() - created.getTime()) / 60000;
+  if (minutesElapsed >= 15) return 'red';
+  if (minutesElapsed >= 10) return 'yellow';
   return 'green';
 }
 
 function getColor(journey) {
   const override = journey.priority_color;
   const key = (!override || override === 'auto')
-    ? getAutoPriority(journey.studies || [])
+    ? getAutoPriority(journey.studies || [], journey.created_date)
     : override;
   return PRIORITY[key] || PRIORITY.green;
 }
@@ -40,8 +39,8 @@ function getColor(journey) {
 function sortByPriority(journeys) {
   const order = { red: 0, yellow: 1, green: 2 };
   return [...journeys].sort((a, b) => {
-    const pa = getAutoPriority(a.studies || []);
-    const pb = getAutoPriority(b.studies || []);
+    const pa = getAutoPriority(a.studies || [], a.created_date);
+    const pb = getAutoPriority(b.studies || [], b.created_date);
     const oa = a.priority_color && a.priority_color !== 'auto' ? order[a.priority_color] : order[pa];
     const ob = b.priority_color && b.priority_color !== 'auto' ? order[b.priority_color] : order[pb];
     return oa - ob;
@@ -92,7 +91,7 @@ function PatientCard({ journey, index, onUpdate }) {
   const [notesOpen, setNotesOpen] = useState(false);
 
   const color = getColor(journey);
-  const autoPriority = getAutoPriority(journey.studies || []);
+  const autoPriority = getAutoPriority(journey.studies || [], journey.created_date);
 
   const archiveJourney = async () => {
     setDeleting(true);
