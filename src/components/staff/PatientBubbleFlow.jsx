@@ -51,37 +51,7 @@ function getInitials(name) {
   return name?.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
 }
 
-// ── Color picker pill ───────────────────────────────────────────────
-function ColorPicker({ current, onChange }) {
-  const options = [
-    { value: 'auto',   label: 'Auto', dot: null },
-    { value: 'green',  label: '●', dot: '#16a34a' },
-    { value: 'yellow', label: '●', dot: '#d97706' },
-    { value: 'red',    label: '●', dot: '#dc2626' },
-  ];
-  return (
-    <div className="flex items-center gap-1 mt-2">
-      <span className="text-[10px] text-gray-400 mr-1">Prioridad:</span>
-      {options.map(opt => (
-        <button
-          key={opt.value}
-          onClick={() => onChange(opt.value)}
-          title={opt.label}
-          className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all"
-          style={{
-            background: opt.dot ? opt.dot : '#e5e7eb',
-            color: opt.dot ? 'white' : '#6b7280',
-            border: current === opt.value ? '2.5px solid #1e293b' : '2px solid transparent',
-            fontSize: opt.dot ? 10 : 9,
-            transform: current === opt.value ? 'scale(1.15)' : 'scale(1)',
-          }}
-        >
-          {opt.dot ? '' : 'A'}
-        </button>
-      ))}
-    </div>
-  );
-}
+
 
 // ── Patient Card ────────────────────────────────────────────────────
 function PatientCard({ journey, index, onUpdate }) {
@@ -96,11 +66,6 @@ function PatientCard({ journey, index, onUpdate }) {
   const archiveJourney = async () => {
     setDeleting(true);
     await base44.entities.ClinicalJourney.update(journey.id, { status: 'cancelled' });
-    onUpdate?.();
-  };
-
-  const changePriorityColor = async (value) => {
-    await base44.entities.ClinicalJourney.update(journey.id, { priority_color: value });
     onUpdate?.();
   };
 
@@ -135,9 +100,7 @@ function PatientCard({ journey, index, onUpdate }) {
   const currentStudy = studies.find(s => s.status === 'in_progress');
   const currentIdx = studies.findIndex(s => s.status === 'in_progress');
 
-  // Determine if using manual override
-  const isManual = journey.priority_color && journey.priority_color !== 'auto';
-  const currentPick = journey.priority_color || 'auto';
+
 
   return (
     <>
@@ -164,7 +127,7 @@ function PatientCard({ journey, index, onUpdate }) {
             className="text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider"
             style={{ background: color.light, color: color.bg }}
           >
-            {isManual ? '★ ' : ''}{color.label}
+            {color.label}
           </span>
         </div>
 
@@ -252,8 +215,7 @@ function PatientCard({ journey, index, onUpdate }) {
           {studies.map(s => s.study_name).join(' → ')}
         </p>
 
-        {/* Color picker */}
-        <ColorPicker current={currentPick} onChange={changePriorityColor} />
+
 
         {/* Action buttons */}
         <div className="flex gap-2 mt-3">
