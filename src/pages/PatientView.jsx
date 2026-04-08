@@ -245,7 +245,7 @@ export default function PatientView() {
 
           {studies.map((study, i) => (
             <LuxuryTimelineNode
-              key={i}
+              key={`${i}-${study.steps_done || 0}-${study.status}`}
               study={study}
               index={i}
               isLast={i === studies.length - 1}
