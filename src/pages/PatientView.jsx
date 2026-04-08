@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Activity, MessageSquarePlus, X, Send, AlertCircle, Clock } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import LuxuryTimelineNode from '../components/patient/LuxuryTimelineNode';
+import LuxuryTimelineNode, { CompletionOverlay } from '../components/patient/LuxuryTimelineNode';
 import VoiceAssistant from '../components/accessibility/VoiceAssistant';
 import { useVoice } from '@/lib/VoiceContext';
 
@@ -215,6 +215,17 @@ export default function PatientView() {
           ))}
         </motion.div>
       )}
+
+      {/* Completion overlay */}
+      <AnimatePresence>
+        {justCompletedIdx !== null && (
+          <CompletionOverlay
+            studyName={studies[justCompletedIdx]?.study_name || ''}
+            studyIndex={justCompletedIdx}
+            onDone={() => setJustCompletedIdx(null)}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Vertical timeline */}
       <div className="w-full max-w-2xl px-6 pb-32">
