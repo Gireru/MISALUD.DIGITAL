@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const MASCOT_URL = 'https://media.base44.com/images/public/69cc5a490014842f1ccc1dfd/38486f9ce_image.png';
+const MASCOT_URL = 'https://media.base44.com/images/public/69cc5a490014842f1ccc1dfd/92fb48b50_generated_image.png';
 
 const BUBBLE_MESSAGES = [
   '¡Hola! ¿En qué puedo ayudarte? 😊',
