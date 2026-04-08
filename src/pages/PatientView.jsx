@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Activity, MessageSquarePlus, X, Send, AlertCircle, Clock } from 'lucide-react';
+import { Activity, X, Send, AlertCircle, Clock, MessageSquarePlus } from 'lucide-react';
+import MascotFAB from '../components/patient/MascotFAB';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import LuxuryTimelineNode from '../components/patient/LuxuryTimelineNode';
@@ -255,31 +256,8 @@ export default function PatientView() {
         }}
       />
 
-      {/* Glassmorphism FAB */}
-      <motion.button
-        onClick={() => {
-          setChatOpen(true);
-          speak('Abriendo asistente');
-        }}
-        className="fixed bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2.5 px-6 py-3.5 rounded-2xl z-40"
-        style={{
-          background: 'rgba(255,255,255,0.7)',
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-          border: '1px solid rgba(126,217,87,0.15)',
-          boxShadow: '0 8px 32px rgba(126,217,87,0.12), 0 2px 8px rgba(0,0,0,0.06)',
-        }}
-        whileHover={{ scale: 1.04, boxShadow: '0 12px 40px rgba(126,217,87,0.2)' }}
-        whileTap={{ scale: 0.97 }}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1 }}
-      >
-        <div className="w-6 h-6 rounded-lg bg-[#7ED957] flex items-center justify-center">
-          <MessageSquarePlus className="w-3.5 h-3.5 text-white" />
-        </div>
-        <span className="text-[13px] font-medium text-gray-800">+ Asistente</span>
-      </motion.button>
+      {/* Mascot FAB */}
+      <MascotFAB onOpen={() => { setChatOpen(true); speak('Abriendo asistente'); }} />
 
       {/* Chat overlay */}
       <AnimatePresence>
