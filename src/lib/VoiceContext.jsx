@@ -25,13 +25,27 @@ export function VoiceProvider({ children }) {
 
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = options.lang || 'es-MX';
-    utterance.rate = options.rate || 1;
-    utterance.pitch = options.pitch || 1;
+    utterance.rate = options.rate ?? 1.1;
+    utterance.pitch = options.pitch ?? 1.9; // voz infantil / aguda
 
-    utterance.onstart = () => setIsSpeaking(true);
-    utterance.onend = () => setIsSpeaking(false);
+    // Intentar seleccionar una voz femenina/infantil en español
+    const trySetVoice = () => {
+      const voices = window.speechSynthesis.getVoices();
+      const preferred = voices.find(v =>
+        v.lang.startsWith('es') && /female|mujer|google|sabina|paulina|mónica|monica/i.test(v.name)
+      ) || voices.find(v => v.lang.startsWith('es'));
+      if (preferred) utterance.voice = preferred;
+      utterance.onstart = () => setIsSpeaking(true);
+      utterance.onend = () => setIsSpeaking(false);
+      window.speechSynthesis.speak(utterance);
+    };
 
-    window.speechSynthesis.speak(utterance);
+    const voices = window.speechSynthesis.getVoices();
+    if (voices.length > 0) {
+      trySetVoice();
+    } else {
+      window.speechSynthesis.onvoiceschanged = trySetVoice;
+    }
   }, []);
 
   // Speech-to-Text

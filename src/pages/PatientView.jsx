@@ -256,56 +256,69 @@ export default function PatientView() {
       />
 
       {/* AI Assistant FAB */}
-      <div className="fixed bottom-7 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-2">
-        {/* Hint label */}
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-2.5">
+
+        {/* Floating speech bubble hint */}
         <motion.div
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.6 }}
-          className="px-3 py-1 rounded-full text-[11px] font-medium text-white"
-          style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(8px)' }}
+          initial={{ opacity: 0, scale: 0.85, y: 8 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ delay: 2, type: 'spring', stiffness: 280, damping: 20 }}
+          className="relative px-4 py-2 rounded-2xl text-[12px] font-semibold text-gray-800 shadow-lg"
+          style={{ background: 'white', border: '1.5px solid rgba(126,217,87,0.35)' }}
         >
-          ¿Tienes dudas? ¡Pregúntame!
+          💬 ¿Tienes dudas? ¡Puedo ayudarte!
+          {/* Triangle pointer */}
+          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-white rotate-45"
+            style={{ border: '1.5px solid rgba(126,217,87,0.35)', borderTop: 'none', borderLeft: 'none' }} />
         </motion.div>
 
+        {/* Main button */}
         <motion.button
           onClick={() => {
             setChatOpen(true);
-            speak('Abriendo asistente');
+            speak('¡Hola! Soy tu asistente. ¿En qué puedo ayudarte?');
           }}
-          className="relative flex items-center gap-3 px-6 py-4 rounded-2xl text-white overflow-hidden"
+          className="relative flex items-center gap-3 pl-2 pr-5 py-2 rounded-full text-white overflow-hidden"
           style={{
             background: 'linear-gradient(135deg, #7ED957 0%, #3dba1e 100%)',
-            boxShadow: '0 6px 28px rgba(126,217,87,0.55), 0 2px 8px rgba(0,0,0,0.1)',
+            boxShadow: '0 8px 30px rgba(126,217,87,0.6), 0 2px 8px rgba(0,0,0,0.08)',
           }}
-          whileHover={{ scale: 1.05, boxShadow: '0 10px 36px rgba(126,217,87,0.7)' }}
-          whileTap={{ scale: 0.96 }}
-          initial={{ opacity: 0, y: 20 }}
+          whileHover={{ scale: 1.06 }}
+          whileTap={{ scale: 0.94 }}
+          initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.2, type: 'spring', stiffness: 260, damping: 20 }}
+          transition={{ delay: 1.3, type: 'spring', stiffness: 260, damping: 18 }}
         >
-          {/* Pulse ring */}
+          {/* Outer glow pulse */}
           <motion.div
-            className="absolute inset-0 rounded-2xl"
-            style={{ border: '2px solid rgba(255,255,255,0.4)' }}
-            animate={{ scale: [1, 1.08, 1], opacity: [0.6, 0, 0.6] }}
-            transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+            className="absolute -inset-1 rounded-full opacity-30"
+            style={{ background: 'radial-gradient(circle, #7ED957, transparent 70%)' }}
+            animate={{ scale: [1, 1.25, 1], opacity: [0.3, 0, 0.3] }}
+            transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
           />
 
-          {/* Icon with white bg circle */}
-          <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
-            <MessageSquarePlus className="w-5 h-5 text-white" />
-          </div>
+          {/* Avatar circle */}
+          <motion.div
+            className="relative w-11 h-11 rounded-full bg-white flex items-center justify-center shrink-0 shadow-sm"
+            animate={{ rotate: [0, -5, 5, 0] }}
+            transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut', repeatDelay: 2 }}
+          >
+            <span className="text-xl">🤖</span>
+          </motion.div>
 
           <div className="text-left">
-            <p className="text-[14px] font-bold leading-tight">Asistente IA</p>
-            <p className="text-[11px] font-normal opacity-85 leading-tight">Resuelvo tus dudas al instante</p>
+            <p className="text-[14px] font-extrabold leading-tight tracking-tight">Asistente IA</p>
+            <p className="text-[11px] font-medium opacity-90 leading-tight">Resuelvo tus dudas al instante ✨</p>
           </div>
 
-          {/* Arrow indicator */}
-          <div className="ml-1 w-6 h-6 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-            <span className="text-white text-xs font-bold">›</span>
-          </div>
+          {/* Animated chevron */}
+          <motion.div
+            className="ml-1"
+            animate={{ x: [0, 3, 0] }}
+            transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            <span className="text-white text-base font-bold">›</span>
+          </motion.div>
         </motion.button>
       </div>
 
