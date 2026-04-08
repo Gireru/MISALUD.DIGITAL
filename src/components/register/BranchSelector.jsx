@@ -92,7 +92,7 @@ function haversineKm(lat1, lng1, lat2, lng2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-export default function BranchSelector({ onSelect }) {
+export default function BranchSelector({ onSelect, requiredServices = [] }) {
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState(null);
   const [geoStatus, setGeoStatus] = useState('idle'); // idle | loading | done | error
@@ -108,15 +108,18 @@ export default function BranchSelector({ onSelect }) {
         const { latitude, longitude } = pos.coords;
         setUserCoords({ lat: latitude, lng: longitude });
 
-        // Find nearest branch
+        // Find nearest branch that has all required services
+        const eligibleBranches = requiredServices.length > 0
+          ? BRANCHES.filter(b => requiredServices.every(svc => b.services.some(bs => bs === svc || bs.startsWith(svc.split(' ')[0]))))
+          : BRANCHES;
+
         let minDist = Infinity;
         let nearest = null;
-        BRANCHES.forEach(b => {
+        (eligibleBranches.length > 0 ? eligibleBranches : BRANCHES).forEach(b => {
           const d = haversineKm(latitude, longitude, b.lat, b.lng);
           if (d < minDist) { minDist = d; nearest = b; }
         });
-        setNearestId(nearest.id);
-        setSelected(nearest);
+        if (nearest) { setNearestId(nearest.id); setSelected(nearest); }
         setGeoStatus('done');
       },
       () => setGeoStatus('error'),
@@ -124,7 +127,12 @@ export default function BranchSelector({ onSelect }) {
     );
   }, []);
 
-  const branchesWithDist = BRANCHES.map(b => ({
+  // Filter branches that have all required services
+  const compatibleBranches = requiredServices.length > 0
+    ? BRANCHES.filter(b => requiredServices.every(svc => b.services.some(bs => bs === svc || bs.startsWith(svc.split(' ')[0]))))
+    : BRANCHES;
+
+  const branchesWithDist = compatibleBranches.map(b => ({
     ...b,
     distKm: userCoords ? haversineKm(userCoords.lat, userCoords.lng, b.lat, b.lng) : null,
   })).sort((a, b) => {
@@ -161,7 +169,11 @@ export default function BranchSelector({ onSelect }) {
             >
               ¿A qué sucursal vas?
             </h1>
-            <p className="text-xs text-gray-400">Selecciona para ver los servicios disponibles</p>
+            <p className="text-xs text-gray-400">
+              {requiredServices.length > 0
+                ? `Solo sucursales con tus ${requiredServices.length} estudio${requiredServices.length !== 1 ? 's' : ''}`
+                : 'Selecciona para ver los servicios disponibles'}
+            </p>
           </div>
         </div>
 
