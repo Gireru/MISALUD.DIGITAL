@@ -303,7 +303,7 @@ export default function PatientView() {
             animate={{ rotate: [0, -5, 5, 0] }}
             transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut', repeatDelay: 2 }}
           >
-            <span className="text-xl">🤖</span>
+            <span className="text-xl">💚</span>
           </motion.div>
 
           <div className="text-left">
