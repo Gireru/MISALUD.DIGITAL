@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FlaskConical, Scan, Stethoscope, Heart, Syringe, Eye, Check,
@@ -80,6 +80,39 @@ function getSteps(studyName) {
     { icon: Activity, label: 'Estudio en proceso' },
     { icon: FileText, label: 'Resultados disponibles próximamente' },
   ];
+}
+
+// ── Hook: progressively tick steps, call onAllDone when finished ───
+function useProgressiveSteps(isCompleted, stepCount, onAllDone) {
+  const [checkedCount, setCheckedCount] = useState(0);
+  const prevCompleted = useRef(false);
+
+  useEffect(() => {
+    // Reset when study goes back to not-completed (edge case)
+    if (!isCompleted) {
+      setCheckedCount(0);
+      prevCompleted.current = false;
+      return;
+    }
+    // Only start ticking if we just transitioned to completed
+    if (prevCompleted.current) return;
+    prevCompleted.current = true;
+
+    let step = 0;
+    const tick = () => {
+      step += 1;
+      setCheckedCount(step);
+      if (step < stepCount) {
+        setTimeout(tick, 600);
+      } else {
+        // All steps ticked — fire overlay after a short pause
+        setTimeout(onAllDone, 400);
+      }
+    };
+    setTimeout(tick, 300);
+  }, [isCompleted, stepCount, onAllDone]);
+
+  return checkedCount;
 }
 
 // ── Full-screen completion celebration ─────────────────────────────
@@ -191,13 +224,20 @@ export function CompletionOverlay({ studyName, studyIndex, onDone }) {
 }
 
 // ── Timeline node ───────────────────────────────────────────────────
-export default function LuxuryTimelineNode({ study, index, isLast }) {
+export default function LuxuryTimelineNode({ study, index, isLast, onStudyCompleted }) {
   const Icon = areaIcons[study.area] || FlaskConical;
   const isCompleted = study.status === 'completed';
   const isCurrent   = study.status === 'in_progress';
   const isPending   = study.status === 'pending';
   const color = getColor(index);
   const steps = getSteps(study.study_name);
+
+  // Progressively tick steps when study completes, then fire onStudyCompleted
+  const checkedCount = useProgressiveSteps(
+    isCompleted,
+    steps.length,
+    onStudyCompleted || (() => {})
+  );
 
   return (
     <motion.div
@@ -355,8 +395,8 @@ export default function LuxuryTimelineNode({ study, index, isLast }) {
           </div>
         )}
 
-        {/* Step-by-step for active/pending */}
-        {(isCurrent || isPending) && (
+        {/* Steps list — shown always when current/pending, and during tick-off when completing */}
+        {(isCurrent || isPending || isCompleted) && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -366,51 +406,63 @@ export default function LuxuryTimelineNode({ study, index, isLast }) {
           >
             {steps.map((step, si) => {
               const StepIcon = step.icon;
+              const isDone = isCompleted && si < checkedCount;
               return (
                 <motion.div
                   key={si}
                   initial={{ opacity: 0, x: -6 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: si * 0.1 + 0.2 }}
+                  transition={{ delay: si * 0.08 + 0.2 }}
                   className="flex items-start gap-2.5"
                 >
-                  <div
+                  {/* Icon / check */}
+                  <motion.div
                     className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
-                    style={{ background: isCurrent ? color.light : 'rgba(0,0,0,0.04)' }}
+                    style={{ background: isDone ? color.light : isCurrent ? color.light : 'rgba(0,0,0,0.04)' }}
+                    animate={isDone ? { scale: [1, 1.3, 1] } : {}}
+                    transition={{ duration: 0.35 }}
                   >
-                    <StepIcon className="w-3 h-3" style={{ color: isCurrent ? color.dark : '#bbb' }} />
+                    <AnimatePresence mode="wait">
+                      {isDone ? (
+                        <motion.div
+                          key="check"
+                          initial={{ scale: 0, rotate: -90 }}
+                          animate={{ scale: 1, rotate: 0 }}
+                          exit={{ scale: 0 }}
+                          transition={{ type: 'spring', stiffness: 400, damping: 14 }}
+                        >
+                          <Check className="w-3 h-3" style={{ color: color.dark }} strokeWidth={3} />
+                        </motion.div>
+                      ) : (
+                        <motion.div key="icon" initial={{ scale: 1 }} animate={{ scale: 1 }}>
+                          <StepIcon className="w-3 h-3" style={{ color: isCurrent ? color.dark : '#bbb' }} />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
+
+                  {/* Label with strikethrough animation */}
+                  <div className="relative pt-1 overflow-hidden">
+                    <p className="text-xs leading-snug" style={{ color: isDone ? color.dark : isCurrent ? '#444' : '#bbb', opacity: isDone ? 0.6 : 1 }}>
+                      {step.label}
+                    </p>
+                    {/* Strikethrough line sweeping left to right */}
+                    <AnimatePresence>
+                      {isDone && (
+                        <motion.div
+                          className="absolute top-1/2 left-0 h-px"
+                          style={{ background: color.dark, top: '50%' }}
+                          initial={{ width: 0 }}
+                          animate={{ width: '100%' }}
+                          exit={{ width: '100%' }}
+                          transition={{ duration: 0.35, ease: 'easeOut' }}
+                        />
+                      )}
+                    </AnimatePresence>
                   </div>
-                  <p className="text-xs leading-snug pt-1" style={{ color: isCurrent ? '#444' : '#bbb' }}>
-                    {step.label}
-                  </p>
                 </motion.div>
               );
             })}
-          </motion.div>
-        )}
-
-        {/* Completed steps (strikethrough) */}
-        {isCompleted && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="space-y-1.5 border-t pt-3 mt-1"
-            style={{ borderColor: color.main + '25' }}
-          >
-            {steps.map((step, si) => (
-              <div key={si} className="flex items-start gap-2.5">
-                <div
-                  className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
-                  style={{ background: color.light }}
-                >
-                  <Check className="w-3 h-3" style={{ color: color.dark }} strokeWidth={3} />
-                </div>
-                <p className="text-xs leading-snug pt-1 line-through opacity-60" style={{ color: color.dark }}>
-                  {step.label}
-                </p>
-              </div>
-            ))}
           </motion.div>
         )}
       </motion.div>
