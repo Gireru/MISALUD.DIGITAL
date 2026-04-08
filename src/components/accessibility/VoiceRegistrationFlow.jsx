@@ -205,7 +205,7 @@ export default function VoiceRegistrationFlow() {
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-center gap-2 w-full h-12 rounded-xl text-sm font-semibold text-white mb-3"
-            style={{ background: 'linear-gradient(135deg, #4B0082, #7B00CC)' }}
+            style={{ background: 'linear-gradient(135deg, #7ED957, #5cca38)' }}
           >
             <QrCode className="w-4 h-4" /> Ver mi trayecto
           </a>
@@ -238,7 +238,7 @@ export default function VoiceRegistrationFlow() {
 
   return (
     <div 
-      className="min-h-screen bg-gradient-to-br from-[#4B0082]/5 to-[#008F4C]/5 flex items-center justify-center p-6"
+      className="min-h-screen bg-gradient-to-br from-[#7ED957]/5 to-[#008F4C]/5 flex items-center justify-center p-6"
     >
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -247,8 +247,8 @@ export default function VoiceRegistrationFlow() {
       >
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="w-14 h-14 rounded-2xl bg-[#4B0082]/10 flex items-center justify-center mx-auto mb-3">
-            <Mic className="w-7 h-7 text-[#4B0082]" />
+          <div className="w-14 h-14 rounded-2xl bg-[#7ED957]/10 flex items-center justify-center mx-auto mb-3">
+            <Mic className="w-7 h-7 text-[#7ED957]" />
           </div>
           <h1 className="font-heading text-2xl font-bold mb-1">Registro por Voz</h1>
           <p className="text-sm text-gray-500">Salud Digna NX Accesible</p>
@@ -298,7 +298,7 @@ export default function VoiceRegistrationFlow() {
         {/* Loading indicator */}
         {loading && (
           <div className="flex justify-center mb-6">
-            <div className="w-8 h-8 border-2 border-[#4B0082]/20 border-t-[#4B0082] rounded-full animate-spin" />
+            <div className="w-8 h-8 border-2 border-[#7ED957]/20 border-t-[#7ED957] rounded-full animate-spin" />
           </div>
         )}
 
@@ -309,7 +309,7 @@ export default function VoiceRegistrationFlow() {
               onClick={handleStartRecording}
               disabled={loading}
               className="w-full py-4 rounded-2xl font-semibold text-white flex items-center justify-center gap-3 disabled:opacity-50"
-              style={{ background: '#4B0082' }}
+              style={{ background: '#7ED957' }}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >

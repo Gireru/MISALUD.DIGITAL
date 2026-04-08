@@ -100,8 +100,8 @@ export default function PatientView() {
   if (!token) return (
     <div className="min-h-screen flex items-center justify-center bg-white">
       <div className="text-center">
-        <div className="w-14 h-14 rounded-2xl bg-[#4B0082]/10 flex items-center justify-center mx-auto mb-5">
-          <Activity className="w-7 h-7 text-[#4B0082]" />
+        <div className="w-14 h-14 rounded-2xl bg-[#7ED957]/10 flex items-center justify-center mx-auto mb-5">
+          <Activity className="w-7 h-7 text-[#7ED957]" />
         </div>
         <h1 style={{ fontFamily: '-apple-system, SF Pro Display, BlinkMacSystemFont, Segoe UI, sans-serif' }} className="text-2xl font-semibold mb-2 text-gray-900">Salud Digna NX</h1>
         <p className="text-gray-400 text-sm">Escanea tu código QR para ver tu trayecto</p>
@@ -114,7 +114,7 @@ export default function PatientView() {
   if (isLoading) return (
     <div className="min-h-screen flex items-center justify-center bg-white">
       <div className="flex flex-col items-center gap-3">
-        <div className="w-10 h-10 border-2 border-[#4B0082]/20 border-t-[#4B0082] rounded-full animate-spin" />
+        <div className="w-10 h-10 border-2 border-[#7ED957]/20 border-t-[#7ED957] rounded-full animate-spin" />
         <p style={{ fontFamily: '-apple-system, SF Pro Display, BlinkMacSystemFont, Segoe UI, sans-serif' }} className="text-xs text-gray-400">Cargando tu trayecto…</p>
       </div>
     </div>
@@ -128,7 +128,7 @@ export default function PatientView() {
         </div>
         <h2 style={{ fontFamily: '-apple-system, SF Pro Display, BlinkMacSystemFont, Segoe UI, sans-serif' }} className="text-lg font-semibold text-gray-800 mb-2">No se encontró el trayecto</h2>
         <p className="text-sm text-gray-400 mb-5">Verifica que el enlace o código QR sea correcto.</p>
-        <a href="/register" className="text-sm text-[#4B0082] underline">Ir al registro</a>
+        <a href="/register" className="text-sm text-[#7ED957] underline">Ir al registro</a>
       </div>
     </div>
   );
@@ -140,13 +140,13 @@ export default function PatientView() {
     >
       {/* Header hero */}
       <div className="relative w-full max-w-2xl overflow-hidden px-6 pt-14 pb-10">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#4B0082]/6 via-white to-[#008F4C]/4 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#7ED957]/6 via-white to-[#008F4C]/4 pointer-events-none" />
         <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="text-center">
           <div className="flex items-center gap-2 mb-6 justify-center">
-            <div className="w-7 h-7 rounded-xl bg-[#4B0082] flex items-center justify-center">
+            <div className="w-7 h-7 rounded-xl bg-[#7ED957] flex items-center justify-center">
               <Activity className="w-3.5 h-3.5 text-white" />
             </div>
-            <span className="text-[11px] font-semibold tracking-widest text-[#4B0082] uppercase">Salud Digna NX</span>
+            <span className="text-[11px] font-semibold tracking-widest text-[#7ED957] uppercase">Salud Digna NX</span>
           </div>
 
           <h1 className="text-3xl font-light text-gray-900 leading-tight">
@@ -160,21 +160,21 @@ export default function PatientView() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.3 }}
             className="flex items-center gap-3 mt-6 rounded-2xl px-5 py-3 justify-center mx-auto w-full"
-            style={{ background: 'rgba(75,0,130,0.06)', border: '1px solid rgba(75,0,130,0.1)' }}
+            style={{ background: 'rgba(126,217,87,0.06)', border: '1px solid rgba(126,217,87,0.1)' }}
           >
             <div className="text-center">
-              <p className="text-[10px] text-[#4B0082]/60 font-medium uppercase tracking-wider">Tiempo restante</p>
-              <p className="text-xl font-semibold text-[#4B0082]">{remainingMinutes} min</p>
+              <p className="text-[10px] text-[#7ED957]/60 font-medium uppercase tracking-wider">Tiempo restante</p>
+              <p className="text-xl font-semibold text-[#7ED957]">{remainingMinutes} min</p>
             </div>
-            <div className="w-px h-8 bg-[#4B0082]/10" />
+            <div className="w-px h-8 bg-[#7ED957]/10" />
             <div className="text-center">
-              <p className="text-[10px] text-[#4B0082]/60 font-medium uppercase tracking-wider">Progreso</p>
-              <p className="text-xl font-semibold text-[#4B0082]">{progressPercent}%</p>
+              <p className="text-[10px] text-[#7ED957]/60 font-medium uppercase tracking-wider">Progreso</p>
+              <p className="text-xl font-semibold text-[#7ED957]">{progressPercent}%</p>
             </div>
-            <div className="w-px h-8 bg-[#4B0082]/10" />
+            <div className="w-px h-8 bg-[#7ED957]/10" />
             <div className="text-center">
-              <p className="text-[10px] text-[#4B0082]/60 font-medium uppercase tracking-wider">Estudios</p>
-              <p className="text-xl font-semibold text-[#4B0082]">{completedCount}/{studies.length}</p>
+              <p className="text-[10px] text-[#7ED957]/60 font-medium uppercase tracking-wider">Estudios</p>
+              <p className="text-xl font-semibold text-[#7ED957]">{completedCount}/{studies.length}</p>
             </div>
           </motion.div>
         </motion.div>
@@ -194,14 +194,14 @@ export default function PatientView() {
               animate={{ opacity: 1, x: 0 }}
               className="p-4 rounded-2xl flex gap-3"
               style={{
-                background: c.is_wait_extension ? 'rgba(245,166,35,0.08)' : 'rgba(75,0,130,0.06)',
-                border: c.is_wait_extension ? '1px solid rgba(245,166,35,0.2)' : '1px solid rgba(75,0,130,0.1)',
+                background: c.is_wait_extension ? 'rgba(245,166,35,0.08)' : 'rgba(126,217,87,0.06)',
+                border: c.is_wait_extension ? '1px solid rgba(245,166,35,0.2)' : '1px solid rgba(126,217,87,0.1)',
               }}
             >
               {c.is_wait_extension ? (
                 <Clock className="w-4 h-4 mt-0.5 shrink-0" style={{ color: '#f5a623' }} />
               ) : (
-                <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" style={{ color: '#4B0082' }} />
+                <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" style={{ color: '#7ED957' }} />
               )}
               <div className="flex-1 min-w-0">
                 <p className="text-[11px] font-semibold text-gray-900 mb-0.5">
@@ -225,7 +225,7 @@ export default function PatientView() {
           {/* Progress line */}
           <motion.div
             className="absolute left-[27px] top-0 w-px origin-top"
-            style={{ background: 'linear-gradient(to bottom, #4B0082, #008F4C)' }}
+            style={{ background: 'linear-gradient(to bottom, #7ED957, #008F4C)' }}
             initial={{ scaleY: 0 }}
             animate={{ scaleY: progressPercent / 100 }}
             transition={{ duration: 1.2, ease: 'easeOut', delay: 0.5 }}
@@ -266,16 +266,16 @@ export default function PatientView() {
           background: 'rgba(255,255,255,0.7)',
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
-          border: '1px solid rgba(75,0,130,0.15)',
-          boxShadow: '0 8px 32px rgba(75,0,130,0.12), 0 2px 8px rgba(0,0,0,0.06)',
+          border: '1px solid rgba(126,217,87,0.15)',
+          boxShadow: '0 8px 32px rgba(126,217,87,0.12), 0 2px 8px rgba(0,0,0,0.06)',
         }}
-        whileHover={{ scale: 1.04, boxShadow: '0 12px 40px rgba(75,0,130,0.2)' }}
+        whileHover={{ scale: 1.04, boxShadow: '0 12px 40px rgba(126,217,87,0.2)' }}
         whileTap={{ scale: 0.97 }}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 1 }}
       >
-        <div className="w-6 h-6 rounded-lg bg-[#4B0082] flex items-center justify-center">
+        <div className="w-6 h-6 rounded-lg bg-[#7ED957] flex items-center justify-center">
           <MessageSquarePlus className="w-3.5 h-3.5 text-white" />
         </div>
         <span className="text-[13px] font-medium text-gray-800">+ Asistente</span>
@@ -303,7 +303,7 @@ export default function PatientView() {
               {/* Chat header */}
               <div className="flex items-center justify-between px-6 pt-6 pb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-2xl bg-[#4B0082] flex items-center justify-center">
+                  <div className="w-9 h-9 rounded-2xl bg-[#7ED957] flex items-center justify-center">
                     <MessageSquarePlus className="w-4 h-4 text-white" />
                   </div>
                   <div>
@@ -335,7 +335,7 @@ export default function PatientView() {
                       className="max-w-[78%] rounded-2xl px-4 py-3 text-[13px] leading-relaxed"
                       style={
                         msg.role === 'user'
-                          ? { background: '#4B0082', color: 'white', borderBottomRightRadius: 6 }
+                          ? { background: '#7ED957', color: 'white', borderBottomRightRadius: 6 }
                           : { background: '#f5f5f7', color: '#1d1d1f', borderBottomLeftRadius: 6 }
                       }
                     >
@@ -366,13 +366,13 @@ export default function PatientView() {
                   onChange={e => setInputMsg(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleSend()}
                   placeholder="Escribe tu pregunta…"
-                  className="rounded-2xl border-0 bg-gray-100 text-sm focus-visible:ring-1 focus-visible:ring-[#4B0082]/30"
+                  className="rounded-2xl border-0 bg-gray-100 text-sm focus-visible:ring-1 focus-visible:ring-[#7ED957]/30"
                 />
                 <Button
                   onClick={handleSend}
                   disabled={aiLoading}
                   className="rounded-2xl shrink-0 px-4"
-                  style={{ background: '#4B0082' }}
+                  style={{ background: '#7ED957' }}
                 >
                   <Send className="w-4 h-4" />
                 </Button>

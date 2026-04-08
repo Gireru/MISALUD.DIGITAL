@@ -32,7 +32,7 @@ export default function RegisterPatient() {
   useEffect(() => {
     if (!result) return;
     const end = Date.now() + 2000;
-    const colors = ['#4B0082', '#7B00CC', '#008F4C', '#fff'];
+    const colors = ['#7ED957', '#5cca38', '#008F4C', '#fff'];
     const frame = () => {
       confetti({ particleCount: 6, angle: 60,  spread: 55, origin: { x: 0 }, colors });
       confetti({ particleCount: 6, angle: 120, spread: 55, origin: { x: 1 }, colors });
@@ -131,8 +131,8 @@ export default function RegisterPatient() {
             rel="noopener noreferrer"
             className="flex items-center justify-center gap-2 w-full h-14 rounded-2xl text-base font-semibold text-white mb-3"
             style={{
-              background: 'linear-gradient(135deg, #4B0082, #7B00CC)',
-              boxShadow: '0 8px 24px rgba(75,0,130,0.35)',
+              background: 'linear-gradient(135deg, #7ED957, #5cca38)',
+              boxShadow: '0 8px 24px rgba(126,217,87,0.35)',
             }}
           >
             <QrCode className="w-5 h-5" /> Ver mi trayecto
@@ -153,7 +153,7 @@ export default function RegisterPatient() {
           </a>
           <a
             href="/voice-register"
-            className="flex items-center justify-center gap-2 w-full h-11 rounded-xl border border-purple-200 text-sm text-purple-700 hover:bg-purple-50 transition-colors"
+            className="flex items-center justify-center gap-2 w-full h-11 rounded-xl border border-green-300 text-sm text-green-700 hover:bg-green-50 transition-colors"
           >
             <Mic className="w-4 h-4" /> Registro por voz
           </a>
@@ -171,7 +171,7 @@ export default function RegisterPatient() {
           <p className="text-sm text-muted-foreground mt-1">Completa los datos para generar tu trayecto</p>
           <a
             href="/voice-register"
-            className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-purple-200 text-sm text-purple-700 hover:bg-purple-50 transition-colors"
+            className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-green-300 text-sm text-green-700 hover:bg-green-50 transition-colors"
           >
             <Mic className="w-4 h-4" /> O usa registro por voz
           </a>
@@ -219,8 +219,8 @@ export default function RegisterPatient() {
                     onKeyDown={e => e.key === 'Enter' && toggleStudy(study.name)}
                     className="flex items-center gap-3 rounded-xl border p-3 cursor-pointer select-none transition-all"
                     style={{
-                      borderColor: sel ? 'rgba(75,0,130,0.3)' : undefined,
-                      background: sel ? 'rgba(75,0,130,0.05)' : undefined,
+                      borderColor: sel ? 'rgba(126,217,87,0.3)' : undefined,
+                      background: sel ? 'rgba(126,217,87,0.05)' : undefined,
                     }}
                   >
                     <Checkbox checked={sel} className="pointer-events-none shrink-0" />
@@ -247,7 +247,7 @@ export default function RegisterPatient() {
             onClick={handleRegister}
             disabled={loading || !name.trim() || !phone.trim() || selectedStudies.length === 0}
             className="w-full h-12 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 transition-opacity disabled:opacity-50"
-            style={{ background: 'linear-gradient(135deg, #4B0082, #7B00CC)' }}
+            style={{ background: 'linear-gradient(135deg, #7ED957, #5cca38)' }}
           >
             {loading ? (
               <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />

@@ -326,7 +326,7 @@ function PatientCard({ journey, index, onUpdate }) {
             className="py-2.5 px-3 rounded-2xl text-xs font-semibold flex items-center justify-center gap-1.5"
             style={{
               background: 'rgba(75,0,130,0.08)',
-              color: '#4B0082',
+              color: '#7ED957',
               border: '1px solid rgba(75,0,130,0.18)',
               fontFamily: '-apple-system, SF Pro Text, sans-serif',
             }}
