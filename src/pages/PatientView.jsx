@@ -87,11 +87,11 @@ export default function PatientView() {
 
   const studies = journey?.studies || [];
   const completedCount = studies.filter(s => s.status === 'completed').length;
-  const remainingMinutes = studies
-    .filter(s => s.status !== 'completed')
-    .reduce((sum, s) => sum + (s.estimated_minutes || 0), 0);
+  const activeStudy = studies.find(s => s.status === 'in_progress');
+  const remainingMinutes = activeStudy ? (activeStudy.estimated_minutes || 0) : 0;
   const totalMinutes = studies.reduce((sum, s) => sum + (s.estimated_minutes || 0), 0);
-  const progressPercent = totalMinutes > 0 ? Math.round((totalMinutes - remainingMinutes) / totalMinutes * 100) : 0;
+  const completedMinutes = studies.filter(s => s.status === 'completed').reduce((sum, s) => sum + (s.estimated_minutes || 0), 0);
+  const progressPercent = totalMinutes > 0 ? Math.round(completedMinutes / totalMinutes * 100) : 0;
 
   if (!token) return (
     <div className="min-h-screen flex items-center justify-center bg-white">
