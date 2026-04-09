@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, Phone, AlertTriangle, Trash2, MessageSquare, Check, X, Siren, Clock } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import { useQuery } from '@tanstack/react-query';
 import EmergencyCodeModal from './EmergencyCodeModal';
 import DoctorNotesPanel from './DoctorNotesPanel';
@@ -127,13 +127,13 @@ function PatientCard({ journey, index, onUpdate, onStudyComplete, onMarkUrgent }
 
   const archiveJourney = async () => {
     setDeleting(true);
-    await base44.entities.ClinicalJourney.update(journey.id, { status: 'cancelled' });
+    await api.entities.ClinicalJourney.update(journey.id, { status: 'cancelled' });
     onUpdate?.();
   };
 
   const { data: patient } = useQuery({
     queryKey: ['patient', journey.patient_id],
-    queryFn: () => base44.entities.Patient.filter({ id: journey.patient_id }).then(r => r[0] || null),
+    queryFn: () => api.entities.Patient.filter({ id: journey.patient_id }).then(r => r[0] || null),
     enabled: !!journey.patient_id,
     staleTime: 30000,
   });
@@ -144,7 +144,7 @@ function PatientCard({ journey, index, onUpdate, onStudyComplete, onMarkUrgent }
     const steps = getSteps(study?.study_name || '');
     // Update UI immediately
     setLocalStudies(updatedStudies);
-    await base44.entities.ClinicalJourney.update(journey.id, { studies: updatedStudies });
+    await api.entities.ClinicalJourney.update(journey.id, { studies: updatedStudies });
     if ((study.steps_done || 0) >= steps.length - 1) {
       setTimeout(() => markStudyComplete(studyIndex, updatedStudies), 400);
     }
@@ -166,12 +166,12 @@ function PatientCard({ journey, index, onUpdate, onStudyComplete, onMarkUrgent }
     // Update UI immediately
     setLocalStudies(updatedStudies);
 
-    await base44.entities.ClinicalJourney.update(journey.id, {
+    await api.entities.ClinicalJourney.update(journey.id, {
       studies: updatedStudies,
       status: allDone ? 'completed' : 'active',
     });
     if (allDone) {
-      await base44.entities.Patient.update(journey.patient_id, { current_status: 'completed' });
+      await api.entities.Patient.update(journey.patient_id, { current_status: 'completed' });
     }
 
     // 🧠 Trigger ClinicController scheduler

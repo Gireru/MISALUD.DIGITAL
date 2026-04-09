@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Users, Clock, TrendingUp, CheckCircle2, Zap } from 'lucide-react';
@@ -15,22 +15,22 @@ export default function StaffDashboard() {
 
   const { data: modules = [] } = useQuery({
     queryKey: ['clinical-modules'],
-    queryFn: () => base44.entities.ClinicalModule.list(),
+    queryFn: () => api.entities.ClinicalModule.list(),
   });
 
   const { data: journeys = [] } = useQuery({
     queryKey: ['all-journeys'],
-    queryFn: () => base44.entities.ClinicalJourney.filter({ status: 'active' }, '-created_date', 50),
+    queryFn: () => api.entities.ClinicalJourney.filter({ status: 'active' }, '-created_date', 50),
   });
 
   const { data: allPatients = [] } = useQuery({
     queryKey: ['all-patients'],
-    queryFn: () => base44.entities.Patient.list(),
+    queryFn: () => api.entities.Patient.list(),
   });
 
   useEffect(() => {
-    const u1 = base44.entities.ClinicalJourney.subscribe(() => queryClient.invalidateQueries({ queryKey: ['all-journeys'] }));
-    const u2 = base44.entities.ClinicalModule.subscribe(() => queryClient.invalidateQueries({ queryKey: ['clinical-modules'] }));
+    const u1 = api.entities.ClinicalJourney.subscribe(() => queryClient.invalidateQueries({ queryKey: ['all-journeys'] }));
+    const u2 = api.entities.ClinicalModule.subscribe(() => queryClient.invalidateQueries({ queryKey: ['clinical-modules'] }));
     return () => { u1(); u2(); };
   }, [queryClient]);
 

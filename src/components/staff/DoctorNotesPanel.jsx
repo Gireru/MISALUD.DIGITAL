@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Send, Plus, Clock } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import { useQuery } from '@tanstack/react-query';
 
 export default function DoctorNotesPanel({ journey, onClose, onUpdate }) {
@@ -12,7 +12,7 @@ export default function DoctorNotesPanel({ journey, onClose, onUpdate }) {
   // Fetch comments for this journey
   const { data: comments = [] } = useQuery({
     queryKey: ['journey-comments', journey.id],
-    queryFn: () => base44.entities.JourneyComment.filter({ journey_id: journey.id }, '-created_date'),
+    queryFn: () => api.entities.JourneyComment.filter({ journey_id: journey.id }, '-created_date'),
     enabled: !!journey.id,
   });
 
@@ -20,8 +20,8 @@ export default function DoctorNotesPanel({ journey, onClose, onUpdate }) {
     if (!noteText.trim()) return;
     setSaving(true);
     try {
-      const user = await base44.auth.me();
-      await base44.entities.JourneyComment.create({
+      const user = await api.auth.me();
+      await api.entities.JourneyComment.create({
         journey_id: journey.id,
         patient_name: journey.patient_name,
         comment: noteText.trim(),
@@ -40,20 +40,20 @@ export default function DoctorNotesPanel({ journey, onClose, onUpdate }) {
   const handleAddWaitTime = async () => {
     setAddingWait(true);
     try {
-      const user = await base44.auth.me();
+      const user = await api.auth.me();
       // Update avg_wait_minutes for all modules related to current studies
       const currentStudies = journey.studies?.filter(s => s.status !== 'completed') || [];
       for (const study of currentStudies) {
-        const modules = await base44.entities.ClinicalModule.filter({ area_name: study.area });
+        const modules = await api.entities.ClinicalModule.filter({ area_name: study.area });
         for (const mod of modules) {
-          await base44.entities.ClinicalModule.update(mod.id, {
+          await api.entities.ClinicalModule.update(mod.id, {
             avg_wait_minutes: (mod.avg_wait_minutes || 0) + 10,
           });
         }
       }
 
       // Create notification comment
-      await base44.entities.JourneyComment.create({
+      await api.entities.JourneyComment.create({
         journey_id: journey.id,
         patient_name: journey.patient_name,
         comment: 'Se ha extendido el tiempo de espera estimado en 10 minutos debido a demanda clínica.',

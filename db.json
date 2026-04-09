@@ -1,0 +1,95 @@
+{
+  "patients": [
+    {
+      "id": "a3dc806b-792f-40d7-b999-5868620f5178",
+      "name": "ddc2323",
+      "phone": "232",
+      "qr_token": "a286b3ab-98e8-48c5-9372-a4464c0c0755",
+      "current_status": "registered",
+      "created_date": "2026-04-09T10:32:53.854Z"
+    }
+  ],
+  "clinicalJourneys": [
+    {
+      "id": "edd82df7-5578-44fe-a579-b6d50bd1b8ca",
+      "patient_id": "a3dc806b-792f-40d7-b999-5868620f5178",
+      "patient_name": "ddc2323",
+      "studies": [
+        {
+          "study_name": "Análisis de Sangre",
+          "area": "Laboratorio",
+          "status": "pending",
+          "estimated_minutes": 20,
+          "steps_done": 0,
+          "steps_total": 3,
+          "cubicle": null
+        }
+      ],
+      "status": "active",
+      "priority_color": "auto",
+      "penalty_count": 0,
+      "branch": "Monterrey Centro",
+      "created_date": "2026-04-09T10:32:53.855Z"
+    }
+  ],
+  "clinicalModules": [
+    {
+      "id": "mod-1",
+      "area_name": "Laboratorio",
+      "display_name": "Laboratorio Clínico",
+      "avg_wait_minutes": 20,
+      "capacity": 4,
+      "current_count": 0,
+      "is_active": true
+    },
+    {
+      "id": "mod-2",
+      "area_name": "Rayos X",
+      "display_name": "Radiología",
+      "avg_wait_minutes": 15,
+      "capacity": 3,
+      "current_count": 0,
+      "is_active": true
+    },
+    {
+      "id": "mod-3",
+      "area_name": "Ultrasonido",
+      "display_name": "Ultrasonido",
+      "avg_wait_minutes": 25,
+      "capacity": 2,
+      "current_count": 0,
+      "is_active": true
+    },
+    {
+      "id": "mod-4",
+      "area_name": "Electrocardiograma",
+      "display_name": "ECG",
+      "avg_wait_minutes": 10,
+      "capacity": 2,
+      "current_count": 0,
+      "is_active": true
+    },
+    {
+      "id": "mod-5",
+      "area_name": "Densitometría",
+      "display_name": "Densitometría Ósea",
+      "avg_wait_minutes": 18,
+      "capacity": 2,
+      "current_count": 0,
+      "is_active": true
+    }
+  ],
+  "journeyComments": [],
+  "adminCredentials": [
+    {
+      "id": "admin-1",
+      "full_name": "Admin SD",
+      "phone": "5500000000",
+      "password_hash": "admin2026",
+      "role": "admin",
+      "is_active": true
+    }
+  ],
+  "emergencyCodes": [],
+  "users": []
+}

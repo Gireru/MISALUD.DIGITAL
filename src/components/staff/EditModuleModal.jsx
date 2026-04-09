@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 
 export default function EditModuleModal({ module, onClose, onUpdate }) {
   const [currentCapacity, setCurrentCapacity] = useState(module.current_capacity || 0);
@@ -12,7 +12,7 @@ export default function EditModuleModal({ module, onClose, onUpdate }) {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await base44.entities.ClinicalModule.update(module.id, {
+      await api.entities.ClinicalModule.update(module.id, {
         current_capacity: parseInt(currentCapacity) || 0,
         max_capacity: parseInt(maxCapacity) || 1,
         avg_wait_minutes: parseInt(avgWait) || 0,

@@ -1,5 +1,5 @@
 import React from 'react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
@@ -16,7 +16,7 @@ const statusConfig = {
 export default function PatientList() {
   const { data: patients = [], isLoading } = useQuery({
     queryKey: ['all-patients-list'],
-    queryFn: () => base44.entities.Patient.list('-created_date', 100),
+    queryFn: () => api.entities.Patient.list('-created_date', 100),
   });
 
   return (

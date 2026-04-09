@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import { AlertTriangle, X, User, MapPin } from 'lucide-react';
 
 const CODE_STYLES = {
@@ -34,13 +34,13 @@ export default function ActiveEmergencyBanner() {
   const [dismissed, setDismissed] = useState(new Set());
 
   const fetchCodes = async () => {
-    const active = await base44.entities.EmergencyCode.filter({ status: 'active' }, '-created_date', 20);
+    const active = await api.entities.EmergencyCode.filter({ status: 'active' }, '-created_date', 20);
     setCodes(active);
   };
 
   useEffect(() => {
     fetchCodes();
-    const unsub = base44.entities.EmergencyCode.subscribe(() => fetchCodes());
+    const unsub = api.entities.EmergencyCode.subscribe(() => fetchCodes());
     return unsub;
   }, []);
 

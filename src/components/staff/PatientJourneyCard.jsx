@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, ArrowRight, Clock, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 
 export default function PatientJourneyCard({ journey, index, onUpdate }) {
   const studies = journey.studies || [];
@@ -24,13 +24,13 @@ export default function PatientJourneyCard({ journey, index, onUpdate }) {
     }
 
     const allDone = updatedStudies.every(s => s.status === 'completed');
-    await base44.entities.ClinicalJourney.update(journey.id, {
+    await api.entities.ClinicalJourney.update(journey.id, {
       studies: updatedStudies,
       status: allDone ? 'completed' : 'active'
     });
 
     if (allDone) {
-      await base44.entities.Patient.update(journey.patient_id, { current_status: 'completed' });
+      await api.entities.Patient.update(journey.patient_id, { current_status: 'completed' });
     }
 
     onUpdate?.();

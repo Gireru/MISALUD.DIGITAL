@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Activity, MessageSquarePlus, X, Send, AlertCircle, Clock } from 'lucide-react';
@@ -34,7 +34,7 @@ export default function PatientView() {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['patient-journey-by-token', token],
     queryFn: async () => {
-      const res = await base44.functions.invoke('getPatientByToken', { token });
+      const res = await api.functions.invoke('getPatientByToken', { token });
       return res.data;
     },
     enabled: !!token,
@@ -47,18 +47,18 @@ export default function PatientView() {
 
   const { data: comments = [] } = useQuery({
     queryKey: ['journey-comments', journey?.id],
-    queryFn: () => base44.entities.JourneyComment.filter({ journey_id: journey.id }, '-created_date'),
+    queryFn: () => api.entities.JourneyComment.filter({ journey_id: journey.id }, '-created_date'),
     enabled: !!journey?.id,
   });
 
   useEffect(() => {
     if (!journey?.id) return;
-    const unsub1 = base44.entities.ClinicalJourney.subscribe((event) => {
+    const unsub1 = api.entities.ClinicalJourney.subscribe((event) => {
       if (event.id === journey.id) {
         queryClient.invalidateQueries({ queryKey: ['patient-journey-by-token', token] });
       }
     });
-    const unsub2 = base44.entities.JourneyComment.subscribe((event) => {
+    const unsub2 = api.entities.JourneyComment.subscribe((event) => {
       if (event.data?.journey_id === journey.id) {
         queryClient.invalidateQueries({ queryKey: ['journey-comments', journey.id] });
       }
@@ -73,7 +73,7 @@ export default function PatientView() {
     setMessages(prev => [...prev, { role: 'user', content: text }]);
     setAiLoading(true);
     try {
-      const res = await base44.functions.invoke('chatAssistant', {
+      const res = await api.functions.invoke('chatAssistant', {
         message: text,
         patientName: patient?.name || '',
       });

@@ -13,7 +13,7 @@
  */
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import { ClinicController } from '@/lib/ClinicController';
 
 export function useClinicManager() {
@@ -52,7 +52,7 @@ export function useClinicManager() {
     ctrl.syncJourneys().then(refresh);
 
     // Real-time subscription: reload queue whenever a journey changes
-    const unsub = base44.entities.ClinicalJourney.subscribe((event) => {
+    const unsub = api.entities.ClinicalJourney.subscribe((event) => {
       if (event.type === 'create' || event.type === 'update') {
         if (event.data) ctrl.loadJourney(event.data);
       } else if (event.type === 'delete') {

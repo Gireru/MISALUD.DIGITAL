@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, AlertTriangle, Loader2 } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 
 const CODES = [
   { name: 'Código Plata',    color: '#9E9E9E', textColor: 'white', desc: 'Emergencia médica' },
@@ -29,7 +29,7 @@ export default function EmergencyCodeModal({ patient, journey, onClose }) {
     setLoading(true);
     setError('');
     try {
-      const res = await base44.functions.invoke('triggerEmergencyCode', {
+      const res = await api.functions.invoke('triggerEmergencyCode', {
         codeName: selected.name,
         patientId: patient?.id || '',
         patientName: patient?.name || journey?.patient_name || '',

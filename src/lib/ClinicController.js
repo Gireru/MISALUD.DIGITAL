@@ -1,9 +1,9 @@
 /**
  * ClinicController — Preemptive Dynamic Scheduler with Penalty-Based Retry Logic
- * Integrates with Base44's ClinicalJourney entity for real-time patient-to-room assignment.
+ * Integrates with the ClinicalJourney entity for real-time patient-to-room assignment.
  */
 
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 
 // ── Constants ────────────────────────────────────────────────────────
 const MAX_WAIT_MINUTES    = 25;
@@ -139,7 +139,7 @@ export class ClinicController {
   // ── Public API ───────────────────────────────────────────────────
 
   async syncJourneys() {
-    const journeys = await base44.entities.ClinicalJourney.filter({ status: 'active' });
+    const journeys = await api.entities.ClinicalJourney.filter({ status: 'active' });
     journeys.forEach(j => this._queue.upsert(j));
     this._checkWaitAlerts();
   }
@@ -182,7 +182,7 @@ export class ClinicController {
       this._onAlert(`⚠️ ${patient.patientName} no se presentó al estudio "${studyType}". Penalización: 15 min de espera. (Falta ${newCount}/${MAX_RETRY_COUNT})`);
 
       // Persist penalty count to DB
-      await base44.entities.ClinicalJourney.update(journeyId, {
+      await api.entities.ClinicalJourney.update(journeyId, {
         penalty_count: newCount,
         penalty_until: new Date(Date.now() + PENALTY_DURATION_MS).toISOString(),
       });
@@ -192,7 +192,7 @@ export class ClinicController {
       this._onNoShow(patient);
       this._onAlert(`🚫 ${patient.patientName} eliminado del flujo activo por ${MAX_RETRY_COUNT} ausencias consecutivas.`);
 
-      await base44.entities.ClinicalJourney.update(journeyId, {
+      await api.entities.ClinicalJourney.update(journeyId, {
         status: 'cancelled',
         penalty_count: newCount,
       });
@@ -218,7 +218,7 @@ export class ClinicController {
       patient.status = 'waiting';
     }
 
-    await base44.entities.ClinicalJourney.update(journeyId, { priority_color: 'red' });
+    await api.entities.ClinicalJourney.update(journeyId, { priority_color: 'red' });
     this._onAlert(`🚨 ${patient.patientName} marcado como URGENTE — prioridad máxima activada.`);
 
     // Immediately try to dispatch for each of their pending studies
@@ -298,11 +298,11 @@ export class ClinicController {
   }
 
   async _persistAssignment(patient, studyType, roomId) {
-    const journeys = await base44.entities.ClinicalJourney.filter({ id: patient.journeyId });
+    const journeys = await api.entities.ClinicalJourney.filter({ id: patient.journeyId });
     const journey  = journeys[0];
     if (!journey) return;
 
-    const allActive = await base44.entities.ClinicalJourney.filter({ status: 'active' });
+    const allActive = await api.entities.ClinicalJourney.filter({ status: 'active' });
     const bestRoom  = this._pickBestCubicle(studyType, allActive) || roomId;
 
     const updatedStudies = (journey.studies || []).map(s => {
@@ -312,7 +312,7 @@ export class ClinicController {
       return s;
     });
 
-    await base44.entities.ClinicalJourney.update(patient.journeyId, { studies: updatedStudies });
+    await api.entities.ClinicalJourney.update(patient.journeyId, { studies: updatedStudies });
   }
 
   _pickBestCubicle(studyName, allActiveJourneys) {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Activity, Phone, ChevronRight, CheckCircle2, Clock, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -22,7 +22,7 @@ export default function MisTrayectos() {
     setPatients(null);
     setJourneys([]);
 
-    const found = await base44.entities.Patient.filter({ phone: cleaned });
+    const found = await api.entities.Patient.filter({ phone: cleaned });
     if (!found || found.length === 0) {
       setError('No encontramos registros con ese número de teléfono.');
       setLoading(false);
@@ -33,7 +33,7 @@ export default function MisTrayectos() {
 
     const allJourneys = [];
     for (const p of found) {
-      const pJourneys = await base44.entities.ClinicalJourney.filter({ patient_id: p.id });
+      const pJourneys = await api.entities.ClinicalJourney.filter({ patient_id: p.id });
       pJourneys.forEach(j => allJourneys.push({ ...j, _patientPhone: p.phone }));
     }
 

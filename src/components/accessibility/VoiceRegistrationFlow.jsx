@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mic, MicOff, CheckCircle2, AlertCircle, QrCode, Square } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import { QRCodeSVG } from 'qrcode.react';
 import { useVoice } from '@/lib/VoiceContext';
 import { Button } from '@/components/ui/button';
@@ -45,7 +45,7 @@ export default function VoiceRegistrationFlow() {
   const initializeFlow = async () => {
     setLoading(true);
     try {
-      const res = await base44.functions.invoke('voiceRegistrationFlow', {
+      const res = await api.functions.invoke('voiceRegistrationFlow', {
         action: 'start'
       });
       const fullMessage = `${res.data.message}. Mantén presionado el micrófono para grabar tu respuesta.`;
@@ -98,7 +98,7 @@ export default function VoiceRegistrationFlow() {
       formData.append('action', action);
       formData.append('currentData', JSON.stringify(registrationData));
 
-      const res = await base44.functions.invoke('transcribeVoiceNote', {
+      const res = await api.functions.invoke('transcribeVoiceNote', {
         audioBase64: await blobToBase64(audioBlob),
         action,
         currentData: registrationData
@@ -114,7 +114,7 @@ export default function VoiceRegistrationFlow() {
         return;
       }
 
-      const flowRes = await base44.functions.invoke('voiceRegistrationFlow', {
+      const flowRes = await api.functions.invoke('voiceRegistrationFlow', {
         action: action,
         currentData: registrationData,
         transcript: transcript

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MessageCircle, X, Send, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 
 export default function ChatAssistant() {
   const [isOpen, setIsOpen] = useState(false);
@@ -20,7 +20,7 @@ export default function ChatAssistant() {
     setMessages(prev => [...prev, { role: 'user', content: userMsg }]);
     setLoading(true);
 
-    const response = await base44.integrations.Core.InvokeLLM({
+    const response = await api.integrations.Core.InvokeLLM({
       prompt: `Eres un asistente clínico amigable de SD-NEXUS (Salud Digna). Responde de forma breve y clara en español. Pregunta del paciente: "${userMsg}"`,
     });
 

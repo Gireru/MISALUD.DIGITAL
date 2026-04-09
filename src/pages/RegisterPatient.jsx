@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { api } from '@/api/client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -43,7 +43,7 @@ export default function RegisterPatient() {
     setLoading(true);
     try {
       const studiesData = ALL_STUDIES.filter(s => selectedStudies.includes(s.name));
-      const response = await base44.functions.invoke('registerPatient', {
+      const response = await api.functions.invoke('registerPatient', {
         name: name.trim(), phone: phone.trim(),
         selectedStudies, availableStudies: studiesData, branchName: branch?.name,
       });
