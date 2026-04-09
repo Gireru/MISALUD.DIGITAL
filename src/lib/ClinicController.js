@@ -6,17 +6,15 @@
 import { base44 } from '@/api/base44Client';
 
 // ── Constants ────────────────────────────────────────────────────────
-const MAX_WAIT_MINUTES      = 25;
-const PENALTY_DURATION_MS   = 15 * 60 * 1000;  // 15 min
-const NOSHOW_WINDOW_MS      = 5  * 60 * 1000;  // 5 min to check-in
-const MAX_RETRY_COUNT       = 3;
-const ROOMS_PER_STUDY       = 4;
+const MAX_WAIT_MINUTES    = 25;
+const PENALTY_DURATION_MS = 15 * 60 * 1000;  // 15 min
+const NOSHOW_WINDOW_MS    = 5  * 60 * 1000;  // 5 min to check-in
+const MAX_RETRY_COUNT     = 3;
+const ROOMS_PER_STUDY     = 4;
 
 // ── Room State ───────────────────────────────────────────────────────
-// Managed in-memory; keyed by studyType → array of room slots
 class RoomManager {
   constructor() {
-    // { [studyType]: [{ roomId, isOccupied, currentPatientId, lastStatusChange }] }
     this._rooms = {};
   }
 
@@ -33,7 +31,6 @@ class RoomManager {
 
   getFreeRoom(studyType) {
     this._ensureStudy(studyType);
-    // Balance: pick the room that has been free the longest
     return this._rooms[studyType]
       .filter(r => !r.isOccupied)
       .sort((a, b) => a.lastStatusChange - b.lastStatusChange)[0] || null;
@@ -43,9 +40,9 @@ class RoomManager {
     this._ensureStudy(studyType);
     const room = this._rooms[studyType].find(r => r.roomId === roomId);
     if (room) {
-      room.isOccupied         = true;
-      room.currentPatientId   = patientId;
-      room.lastStatusChange   = Date.now();
+      room.isOccupied       = true;
+      room.currentPatientId = patientId;
+      room.lastStatusChange = Date.now();
     }
   }
 
@@ -53,9 +50,9 @@ class RoomManager {
     this._ensureStudy(studyType);
     const room = this._rooms[studyType].find(r => r.roomId === roomId);
     if (room) {
-      room.isOccupied         = false;
-      room.currentPatientId   = null;
-      room.lastStatusChange   = Date.now();
+      room.isOccupied       = false;
+      room.currentPatientId = null;
+      room.lastStatusChange = Date.now();
     }
   }
 
@@ -63,41 +60,41 @@ class RoomManager {
 }
 
 // ── Patient Queue ────────────────────────────────────────────────────
-// Wraps ClinicalJourney records with local state extensions
 class PatientQueue {
   constructor() {
-    // { [journeyId]: { urgencyLevel, requiredStudies, status, retryCount, waitingSince, lockoutUntil } }
     this._patients = {};
   }
 
   upsert(journey) {
     const existing = this._patients[journey.id] || {};
+
+    // Priority: red (emergency/urgency) = 0, yellow = 1, green = 2
+    const priorityMap = { red: 0, yellow: 1, green: 2, auto: 2 };
+    const rawPriority = journey.priority_color || 'auto';
+    const urgencyLevel = priorityMap[rawPriority] ?? 2;
+
     this._patients[journey.id] = {
       journeyId:       journey.id,
       patientId:       journey.patient_id,
       patientName:     journey.patient_name,
-      urgencyLevel:    journey.priority_color === 'red' ? 0 : 1, // 0 = Emergency
+      urgencyLevel,                          // 0 = emergency, 1 = elevated, 2 = normal
+      priority_color:  rawPriority,
       requiredStudies: (journey.studies || [])
         .filter(s => s.status !== 'completed')
         .map(s => s.study_name),
       allStudies:      journey.studies || [],
       status:          existing.status || 'waiting',
-      retryCount:      existing.retryCount || 0,
+      retryCount:      journey.penalty_count ?? existing.retryCount ?? 0,
       waitingSince:    existing.waitingSince || Date.now(),
       lockoutUntil:    existing.lockoutUntil || null,
       createdDate:     journey.created_date,
     };
   }
 
-  remove(journeyId) {
-    delete this._patients[journeyId];
-  }
+  remove(journeyId) { delete this._patients[journeyId]; }
+  get(journeyId)    { return this._patients[journeyId] || null; }
 
-  get(journeyId) {
-    return this._patients[journeyId] || null;
-  }
-
-  // Returns sorted candidates for a given studyType
+  /** Candidates for a given studyType — sorted by priority then wait time */
   getCandidatesFor(studyType) {
     const now = Date.now();
     return Object.values(this._patients)
@@ -132,8 +129,8 @@ export class ClinicController {
   constructor({ onAlert, onAssignment, onNoShow } = {}) {
     this._rooms    = new RoomManager();
     this._queue    = new PatientQueue();
-    this._locks    = new Set();          // journeyIds currently being processed (race-condition guard)
-    this._timers   = {};                 // { [journeyId-studyType]: timeoutId }
+    this._locks    = new Set();
+    this._timers   = {};
     this._onAlert      = onAlert      || console.warn;
     this._onAssignment = onAssignment || (() => {});
     this._onNoShow     = onNoShow     || (() => {});
@@ -141,30 +138,23 @@ export class ClinicController {
 
   // ── Public API ───────────────────────────────────────────────────
 
-  /** Call this to load / refresh all active journeys into the queue */
   async syncJourneys() {
     const journeys = await base44.entities.ClinicalJourney.filter({ status: 'active' });
     journeys.forEach(j => this._queue.upsert(j));
     this._checkWaitAlerts();
   }
 
-  /** Add or refresh a single journey (call after create/update events) */
   loadJourney(journey) {
     this._queue.upsert(journey);
     this._checkWaitAlertFor(this._queue.get(journey.id));
   }
 
   /**
-   * A. handleStudyCompletion — called when staff taps "Tachar" and completes all steps
-   * @param {string} journeyId  - ClinicalJourney id
-   * @param {string} studyType  - e.g. "Tomografía"
-   * @param {string} roomId     - e.g. "Tomografía-R2"
+   * Called when staff completes all steps of a study (Tachar final).
    */
   async handleStudyCompletion(journeyId, studyType, roomId) {
-    // 1. Free the room
     this._rooms.freeRoom(studyType, roomId);
 
-    // 2. Update local queue — remove completed study from requiredStudies
     const patient = this._queue.get(journeyId);
     if (patient) {
       patient.requiredStudies = patient.requiredStudies.filter(s => s !== studyType);
@@ -172,38 +162,71 @@ export class ClinicController {
       patient.waitingSince = Date.now();
     }
 
-    // 3. Immediately dispatch next patient for this room type
     await this._dispatchNextPatient(studyType);
   }
 
   /**
-   * C. handleNoShow — called when 5-min window expires without checkIn
+   * Called when 5-min no-show window expires.
+   * 1st and 2nd infraction → 15-min penalty.
+   * 3rd infraction → cancel journey (eliminates from active flow).
    */
   async handleNoShow(journeyId, studyType) {
     const patient = this._queue.get(journeyId);
     if (!patient) return;
 
-    if (patient.retryCount < MAX_RETRY_COUNT - 1) {
-      // Penalize: move to end of queue, lockout 15 min
+    const newCount = patient.retryCount + 1;
+
+    if (newCount < MAX_RETRY_COUNT) {
+      // Penalize: 15-min lockout
       this._queue.setPenalized(journeyId);
-      this._onAlert(`⚠️ ${patient.patientName} no se presentó. Penalizado por 15 min. (Intento ${patient.retryCount}/${MAX_RETRY_COUNT})`);
+      this._onAlert(`⚠️ ${patient.patientName} no se presentó al estudio "${studyType}". Penalización: 15 min de espera. (Falta ${newCount}/${MAX_RETRY_COUNT})`);
+
+      // Persist penalty count to DB
+      await base44.entities.ClinicalJourney.update(journeyId, {
+        penalty_count: newCount,
+        penalty_until: new Date(Date.now() + PENALTY_DURATION_MS).toISOString(),
+      });
     } else {
-      // 3 strikes → remove
+      // 3 strikes → cancel
       this._queue.markNoShow(journeyId);
       this._onNoShow(patient);
-      this._onAlert(`🚫 ${patient.patientName} marcado como NO SHOW después de ${MAX_RETRY_COUNT} intentos.`);
-      // Persist to DB
-      await base44.entities.ClinicalJourney.update(journeyId, { status: 'cancelled' });
+      this._onAlert(`🚫 ${patient.patientName} eliminado del flujo activo por ${MAX_RETRY_COUNT} ausencias consecutivas.`);
+
+      await base44.entities.ClinicalJourney.update(journeyId, {
+        status: 'cancelled',
+        penalty_count: newCount,
+      });
     }
 
-    // Free room and dispatch next
-    const freeRoom = this._rooms.getFreeRoom(studyType);
-    if (freeRoom) await this._dispatchNextPatient(studyType);
+    // Free room and dispatch next patient
+    this._rooms.freeRoom(studyType, patient.journeyId);
+    await this._dispatchNextPatient(studyType);
   }
 
   /**
-   * checkIn — patient physically arrives; clears the no-show timer
+   * Mark patient as urgent/emergency — moves to front of queue.
+   * Persists priority_color='red' to DB.
    */
+  async markUrgent(journeyId) {
+    const patient = this._queue.get(journeyId);
+    if (!patient) return;
+
+    patient.urgencyLevel = 0;
+    patient.priority_color = 'red';
+    if (patient.lockoutUntil) {
+      patient.lockoutUntil = null; // lift penalty lockout for emergencies
+      patient.status = 'waiting';
+    }
+
+    await base44.entities.ClinicalJourney.update(journeyId, { priority_color: 'red' });
+    this._onAlert(`🚨 ${patient.patientName} marcado como URGENTE — prioridad máxima activada.`);
+
+    // Immediately try to dispatch for each of their pending studies
+    for (const studyType of patient.requiredStudies) {
+      await this._dispatchNextPatient(studyType);
+    }
+  }
+
   checkIn(journeyId, studyType) {
     const timerKey = `${journeyId}-${studyType}`;
     if (this._timers[timerKey]) {
@@ -213,8 +236,8 @@ export class ClinicController {
     this._queue.setStatus(journeyId, 'in_consultation');
   }
 
-  getQueueSnapshot()  { return this._queue.getAll(); }
-  getRoomSnapshot()   { return this._rooms.getAll(); }
+  getQueueSnapshot() { return this._queue.getAll(); }
+  getRoomSnapshot()  { return this._rooms.getAll(); }
 
   destroy() {
     Object.values(this._timers).forEach(clearTimeout);
@@ -223,31 +246,35 @@ export class ClinicController {
 
   // ── Private ──────────────────────────────────────────────────────
 
-  /**
-   * B. dispatchNextPatient — the scheduling brain
-   */
   async _dispatchNextPatient(studyType) {
     const room = this._rooms.getFreeRoom(studyType);
-    if (!room) return; // All rooms occupied
+    if (!room) return;
 
     const candidates = this._queue.getCandidatesFor(studyType);
     if (candidates.length === 0) return;
 
     const now = Date.now();
 
-    // Priority 1: Emergency (urgencyLevel 0)
+    // Priority 1: Emergency (urgencyLevel 0 → red)
     let chosen = candidates
       .filter(p => p.urgencyLevel === 0)
       .sort((a, b) => a.waitingSince - b.waitingSince)[0];
 
-    // Priority 2: Waiting > 15 mins
+    // Priority 2: Elevated (urgencyLevel 1 → yellow)
+    if (!chosen) {
+      chosen = candidates
+        .filter(p => p.urgencyLevel === 1)
+        .sort((a, b) => a.waitingSince - b.waitingSince)[0];
+    }
+
+    // Priority 3: Waiting > 15 mins (any urgency)
     if (!chosen) {
       chosen = candidates
         .filter(p => (now - p.waitingSince) / 60000 >= 15)
         .sort((a, b) => a.waitingSince - b.waitingSince)[0];
     }
 
-    // Priority 3: Most pending studies (keeps patients flowing)
+    // Priority 4: Most pending studies (maximize throughput)
     if (!chosen) {
       chosen = candidates
         .sort((a, b) => b.requiredStudies.length - a.requiredStudies.length)[0];
@@ -255,22 +282,15 @@ export class ClinicController {
 
     if (!chosen) return;
 
-    // Race-condition guard
     if (this._locks.has(chosen.journeyId)) return;
     this._locks.add(chosen.journeyId);
 
     try {
-      // Mark room as occupied
       this._rooms.occupyRoom(studyType, room.roomId, chosen.journeyId);
       this._queue.setStatus(chosen.journeyId, 'in_consultation');
 
-      // Persist: set study to in_progress in DB
       await this._persistAssignment(chosen, studyType, room.roomId);
-
-      // Notify
       this._onAssignment({ patient: chosen, studyType, room });
-
-      // Start no-show timer (5 min)
       this._startNoShowTimer(chosen.journeyId, studyType);
     } finally {
       this._locks.delete(chosen.journeyId);
@@ -282,7 +302,6 @@ export class ClinicController {
     const journey  = journeys[0];
     if (!journey) return;
 
-    // Pick least-loaded cubicle from current active journeys
     const allActive = await base44.entities.ClinicalJourney.filter({ status: 'active' });
     const bestRoom  = this._pickBestCubicle(studyType, allActive) || roomId;
 
@@ -298,9 +317,7 @@ export class ClinicController {
 
   _pickBestCubicle(studyName, allActiveJourneys) {
     const counts = {};
-    for (let i = 1; i <= ROOMS_PER_STUDY; i++) {
-      counts[`${studyName}-R${i}`] = 0;
-    }
+    for (let i = 1; i <= ROOMS_PER_STUDY; i++) counts[`${studyName}-R${i}`] = 0;
     for (const journey of allActiveJourneys) {
       for (const s of (journey.studies || [])) {
         if (s.study_name === studyName && s.cubicle && counts[s.cubicle] !== undefined) {

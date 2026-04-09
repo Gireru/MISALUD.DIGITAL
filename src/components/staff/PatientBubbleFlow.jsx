@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle2, Phone, AlertTriangle, Trash2, MessageSquare, Check, X } from 'lucide-react';
+import { CheckCircle2, Phone, AlertTriangle, Trash2, MessageSquare, Check, X, Siren, Clock } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import EmergencyCodeModal from './EmergencyCodeModal';
@@ -108,7 +108,7 @@ function getInitials(name) {
 
 
 // ── Patient Card ────────────────────────────────────────────────────
-function PatientCard({ journey, index, onUpdate, onStudyComplete }) {
+function PatientCard({ journey, index, onUpdate, onStudyComplete, onMarkUrgent }) {
   const [emergencyOpen, setEmergencyOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -315,6 +315,27 @@ function PatientCard({ journey, index, onUpdate, onStudyComplete }) {
           </div>
         </div>
 
+        {/* Penalty badge */}
+        {(journey.penalty_count > 0 || journey.penalty_until) && (() => {
+          const isPenalized = journey.penalty_until && new Date(journey.penalty_until) > new Date();
+          const count = journey.penalty_count || 0;
+          return (
+            <motion.div
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-1.5 mb-2 px-3 py-1.5 rounded-xl"
+              style={{ background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.2)' }}
+            >
+              <Clock className="w-3 h-3 text-red-500 shrink-0" />
+              <span className="text-[11px] font-semibold text-red-600">
+                {isPenalized
+                  ? `Penalizado — esperando 15 min (ausencia ${count}/${3})`
+                  : `${count} ausencia${count > 1 ? 's' : ''} registrada${count > 1 ? 's' : ''}`}
+              </span>
+            </motion.div>
+          );
+        })()}
+
         {/* Study step bubbles */}
         <div className="flex items-center gap-1.5 mb-2">
           {studies.map((s, si) => (
@@ -452,6 +473,24 @@ function PatientCard({ journey, index, onUpdate, onStudyComplete }) {
 
         {/* Action buttons */}
         <div className="flex gap-2 mt-3">
+
+          {/* Urgency button — only show if not already red */}
+          {journey.priority_color !== 'red' && (
+            <motion.button
+              onClick={() => onMarkUrgent?.(journey.id)}
+              className="py-2.5 px-3 rounded-2xl text-xs font-semibold flex items-center justify-center gap-1.5"
+              style={{
+                background: 'rgba(220,38,38,0.09)',
+                color: '#dc2626',
+                border: '1px solid rgba(220,38,38,0.22)',
+              }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.97 }}
+              title="Marcar como urgente — sube a prioridad máxima"
+            >
+              <Siren className="w-3.5 h-3.5" />
+            </motion.button>
+          )}
 
           <motion.button
             onClick={() => setNotesOpen(true)}
@@ -592,7 +631,7 @@ function AlertsBanner({ alerts, onDismiss }) {
 
 // ── Main export ─────────────────────────────────────────────────────
 export default function PatientBubbleFlow({ journeys, onUpdate }) {
-  const { handleStudyCompletion, alerts, dismissAlert } = useClinicManager();
+  const { handleStudyCompletion, markUrgent, alerts, dismissAlert } = useClinicManager();
 
   if (journeys.length === 0) {
     return (
@@ -619,6 +658,7 @@ export default function PatientBubbleFlow({ journeys, onUpdate }) {
             index={i}
             onUpdate={onUpdate}
             onStudyComplete={handleStudyCompletion}
+            onMarkUrgent={markUrgent}
           />
         ))}
       </AnimatePresence>

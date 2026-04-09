@@ -41,6 +41,9 @@
           },
           "completed_at": {
             "type": "string"
+          },
+          "steps_done": {
+            "type": "number"
           }
         }
       }
@@ -72,7 +75,16 @@
         "red"
       ],
       "default": "auto",
-      "description": "Color de prioridad asignado manualmente por el doctor (auto = calculado autom\u00e1ticamente)"
+      "description": "Color de prioridad: red = urgencia/emergencia, yellow = elevado, green/auto = normal"
+    },
+    "penalty_count": {
+      "type": "number",
+      "default": 0,
+      "description": "N\u00famero de ausencias acumuladas (m\u00e1x 3 \u2192 cancelaci\u00f3n autom\u00e1tica)"
+    },
+    "penalty_until": {
+      "type": "string",
+      "description": "ISO timestamp hasta el que dura la penalizaci\u00f3n activa"
     }
   },
   "required": [

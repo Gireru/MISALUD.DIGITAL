@@ -84,6 +84,11 @@ export function useClinicManager() {
     refresh();
   }, [refresh]);
 
+  const markUrgent = useCallback(async (journeyId) => {
+    await controllerRef.current?.markUrgent(journeyId);
+    refresh();
+  }, [refresh]);
+
   const dismissAlert = useCallback((id) => {
     setAlerts(prev => prev.filter(a => a.id !== id));
   }, []);
@@ -95,6 +100,7 @@ export function useClinicManager() {
     alerts,
     handleStudyCompletion,
     checkIn,
+    markUrgent,
     dismissAlert,
     refresh,
   };
