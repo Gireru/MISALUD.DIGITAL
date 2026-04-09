@@ -370,6 +370,8 @@ function PatientCard({ journey, index, onUpdate, onStudyComplete }) {
         {currentStudy && (() => {
           const steps = getSteps(currentStudy.study_name);
           const done = currentStudy.steps_done || 0;
+          // Re-compute currentIdx here to avoid stale closure issues
+          const liveCurrentIdx = (journey.studies || []).findIndex(s => s.status === 'in_progress');
           return (
             <motion.div
               initial={{ opacity: 0, y: 6 }}
@@ -386,14 +388,14 @@ function PatientCard({ journey, index, onUpdate, onStudyComplete }) {
                 return (
                   <motion.button
                     key={si}
-                    onClick={() => markStep(currentIdx, si)}
-                    disabled={isDone || !isNext}
+                    onClick={() => { if (isNext && liveCurrentIdx !== -1) markStep(liveCurrentIdx, si); }}
                     className="w-full flex items-center gap-2.5 text-left rounded-xl px-2.5 py-2 transition-all"
                     style={{
                       background: isDone ? `${color.bg}18` : isNext ? 'white' : 'transparent',
                       border: isNext ? `1px solid ${color.bg}40` : '1px solid transparent',
                       cursor: isNext ? 'pointer' : 'default',
                       opacity: !isDone && !isNext ? 0.45 : 1,
+                      pointerEvents: isDone || (!isNext) ? 'none' : 'auto',
                     }}
                     whileHover={isNext ? { scale: 1.01 } : {}}
                     whileTap={isNext ? { scale: 0.97 } : {}}
