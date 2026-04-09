@@ -282,14 +282,33 @@ export class ClinicController {
     const journey  = journeys[0];
     if (!journey) return;
 
+    // Pick least-loaded cubicle from current active journeys
+    const allActive = await base44.entities.ClinicalJourney.filter({ status: 'active' });
+    const bestRoom  = this._pickBestCubicle(studyType, allActive) || roomId;
+
     const updatedStudies = (journey.studies || []).map(s => {
       if (s.study_name === studyType && s.status === 'pending') {
-        return { ...s, status: 'in_progress', cubicle: roomId };
+        return { ...s, status: 'in_progress', cubicle: bestRoom };
       }
       return s;
     });
 
     await base44.entities.ClinicalJourney.update(patient.journeyId, { studies: updatedStudies });
+  }
+
+  _pickBestCubicle(studyName, allActiveJourneys) {
+    const counts = {};
+    for (let i = 1; i <= ROOMS_PER_STUDY; i++) {
+      counts[`${studyName}-R${i}`] = 0;
+    }
+    for (const journey of allActiveJourneys) {
+      for (const s of (journey.studies || [])) {
+        if (s.study_name === studyName && s.cubicle && counts[s.cubicle] !== undefined) {
+          if (s.status === 'in_progress') counts[s.cubicle]++;
+        }
+      }
+    }
+    return Object.entries(counts).sort((a, b) => a[1] - b[1])[0][0];
   }
 
   _startNoShowTimer(journeyId, studyType) {
